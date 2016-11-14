@@ -1,0 +1,5 @@
+Modified error msg string for errtest/in06b:
+Changed
+"Only simple patterns without `.', `*', and `!' operatorscan be negated"
+to
+"Only simple patterns without `.', `*', and `!' operators can be negated"
