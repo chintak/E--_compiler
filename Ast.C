@@ -31,6 +31,8 @@ RefExprNode::RefExprNode(string ext, const SymTabEntry* ste,
 {
 	ext_ = ext;
 	sym_ = ste;
+	cout << "setting type of refexpr\n";
+	type((Type *)ste->type());
 }
 
 RefExprNode::RefExprNode(const RefExprNode& r): ExprNode(r)
@@ -39,7 +41,15 @@ RefExprNode::RefExprNode(const RefExprNode& r): ExprNode(r)
 
 void RefExprNode::print(ostream& os, int indent) const
 {
+	cout <<  "6th\n";
 	os << ext_;
+}
+
+
+void RefExprNode::typePrint(ostream& os, int indent) const
+{
+	cout << "printing type of refexpr\n";
+	type()->print(os, indent);
 }
 
 IfNode::IfNode(ExprNode* cond, StmtNode* thenStmt,
@@ -76,9 +86,42 @@ void IfNode::print(ostream& os, int indent) const
 	}
 }
 
+void IfNode::typePrint(ostream& os, int indent) const
+{
+	os << "if";
+	os << " (";
+	cond_->typePrint(os, indent);
+	os << ") ";
+
+	if (then_) {
+		if (then_->stmtNodeKind() == StmtNode::StmtNodeKind::IF) {
+			then_->typePrint(os, indent);
+			endln(os, indent);
+		} else {
+			then_->typePrint(os, indent);
+			if (then_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+				endln(os, indent);
+		}
+	}
+	if (else_) {
+		os << "else ";
+		else_->typePrint(os, indent);
+		if (else_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+			endln(os, indent);
+	}
+}
+
 void ValueNode::print(ostream& os, int indent) const
 {
+	cout << "7th\n";
+	cout << "print5\n";
 	value()->print(os, indent);
+}
+
+void ValueNode::typePrint(ostream& os, int indent) const
+{
+	cout << "valuenode\n";
+	value()->type()->print(os, indent);
 }
 
 InvocationNode::InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param,
@@ -105,6 +148,23 @@ void InvocationNode::print(ostream& os, int indent) const
 	os << ")";
 }
 
+void InvocationNode::typePrint(ostream& os, int indent) const
+{
+	bool multiParams = false;
+	os << ste_->name() << "(";
+	if (params_)
+		for (unsigned int i = 0; i < params_->size(); i++)
+		{
+			if (multiParams)
+				os << ", ";
+			if ((*params_)[i]) {
+				(*params_)[i]->typePrint(os, indent);
+				multiParams = true;
+			}
+		}
+	os << ")";
+}
+
 InvocationNode::InvocationNode(const InvocationNode& i): ExprNode(i)
 {
 }
@@ -120,6 +180,7 @@ PrimitivePatNode::PrimitivePatNode(EventEntry* ee, vector<VariableEntry*>* param
 
 void PrimitivePatNode::print(ostream& os, int indent) const
 {
+	cout << "3rd\n"; 
 	bool multiParams = false;
 	vector<Type*> *argTypes;
 
@@ -152,6 +213,42 @@ void PrimitivePatNode::print(ostream& os, int indent) const
 	}
 	os << ")";
 }
+
+void PrimitivePatNode::typePrint(ostream& os, int indent) const
+{
+	bool multiParams = false;
+	vector<Type*> *argTypes;
+
+	if (ee_ && ee_->type())
+		argTypes = ee_->type()->argTypes();
+
+	if (argTypes && params_) {
+		for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
+			(*params_)[i]->type((*argTypes)[i]);
+		}
+	}
+	prtSpace(os, indent);
+	os << "(";
+	os << ee_->name();
+	if (ee_->name() != "any") {
+		os << "(";
+		if (argTypes && params_) {
+			for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
+				if (multiParams)
+					os << ", ";
+				(*params_)[i]->typePrint(os, indent);
+				multiParams = true;
+			}
+		}
+		os << ")";
+	}
+	if (cond_) {
+		os << "|";
+		cond_->typePrint(os, indent);
+	}
+	os << ")";
+}
+
 
 bool PrimitivePatNode::hasSeqOps() const
 {
@@ -197,6 +294,27 @@ void PatNode::print(ostream& os, int indent) const
 	os << ")";
 }
 
+void PatNode::typePrint(ostream& os, int indent) const
+{
+	PatNodeKind patKind = kind();
+
+	os << "(";
+	if (patKind == PatNodeKind::NEG) {
+		os << "!";
+	}
+	pat1_->typePrint(os, indent);
+	if (patKind == PatNodeKind::STAR)
+		os << "**";
+	if (pat2_) {
+		if (patKind == PatNodeKind::SEQ)
+			os << ":";
+		else if (patKind == PatNodeKind::OR)
+			os << "\\/";
+		pat2_->typePrint(os, indent);
+	}
+	os << ")";
+}
+
 bool PatNode::hasSeqOps() const
 {
 	return kind() == PatNodeKind::SEQ;
@@ -214,6 +332,7 @@ bool PatNode::hasAnyOrOther() const
 
 void CompoundStmtNode::print(ostream& os, int indent) const
 {
+	cout << "4th\n";
 	list <StmtNode*> *stmtList = stmts_;
 	bool first = true;
 
@@ -242,6 +361,40 @@ void CompoundStmtNode::print(ostream& os, int indent) const
 	prtln(os, indent);
 }
 
+void CompoundStmtNode::typePrint(ostream& os, int indent) const
+{
+	list <StmtNode*> *stmtList = stmts_;
+	bool first = true;
+
+	os << "{";
+	for (list<StmtNode*>::iterator it = stmtList->begin(); it != stmtList->end(); it++) {
+		ostringstream oss;
+		if (*it) {
+			if ((*it)->stmtNodeKind() == StmtNodeKind::EXPR)
+				cout << "oss ";
+			(*it)->typePrint(oss, indent);
+			cout << oss.str() << "...\n";
+			if (oss.str().empty()) {
+				continue;
+			}
+
+			if (first) {
+				prtln(os, indent);
+				first = false;
+			}
+			(*it)->typePrint(os, indent);
+			if ((*it)->stmtNodeKind() != StmtNode::StmtNodeKind::IF &&
+				(*it)->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+			{
+				endln(os, indent);
+			}
+		}
+	}
+	os << "};";
+	prtln(os, indent);
+}
+
+
 void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
 {
 }
@@ -256,12 +409,24 @@ RuleNode::RuleNode(BlockEntry *re, BasePatNode* pat, StmtNode* reaction,
 
 void RuleNode::print(ostream& os, int indent) const
 {
+	cout << "2nd\n";
 	prtSpace(os, STEP_INDENT);
 	pat_->print(os, indent);
 	os << "-->";
 	prtSpace(os, STEP_INDENT);
 	reaction_->print(os, indent + STEP_INDENT);
 	os << ";;\n";
+}
+
+void RuleNode::typePrint(ostream& os, int indent) const
+{
+	prtSpace(os, STEP_INDENT);
+	pat_->typePrint(os, indent);
+	os << "-->";
+	prtSpace(os, STEP_INDENT);
+	reaction_->typePrint(os, indent + STEP_INDENT);
+	os << ";;\n";
+
 }
 
 /****************************************************************/
@@ -383,6 +548,8 @@ OpNode::OpNode(const OpNode &other):
 
 void 
 OpNode::print(ostream& os, int indent) const {
+	cout  << "5th\n";
+	cout << "print3\n";
 	int iopcode = static_cast<int>(opCode_);
   if (opInfo[iopcode].prtType_ == OpNode::OpPrintType::PREFIX) {
 	os << opInfo[iopcode].name_;
@@ -403,6 +570,7 @@ OpNode::print(ostream& os, int indent) const {
 	}
   }
   else if ((opInfo[iopcode].prtType_ == OpNode::OpPrintType::INFIX) && (arity_ == 2)) {
+	cout << "print4\n";
 	if (opInfo[iopcode].needParen_) 
 	  os << "(";
 	if(arg_[0])
@@ -411,6 +579,44 @@ OpNode::print(ostream& os, int indent) const {
 	os << opInfo[iopcode].name_; 
 	if(arg_[1])
 	  arg_[1]->print(os, indent);
+	else os << "NULL";
+	if (opInfo[iopcode].needParen_) 
+	  os << ")";
+  }
+  else internalErr("Unhandled case in OpNode::print");
+}
+
+void 
+OpNode::typePrint(ostream& os, int indent) const {
+	cout << "opnode\n";
+	int iopcode = static_cast<int>(opCode_);
+  if (opInfo[iopcode].prtType_ == OpNode::OpPrintType::PREFIX) {
+	os << opInfo[iopcode].name_;
+	if (arity_ > 0) {
+	  if (opInfo[iopcode].needParen_) 
+		os << '(';
+	  for (unsigned i=0; i < arity_-1; i++) {
+		if (arg_[i])
+		  arg_[i]->typePrint(os, indent);
+	    else os << "NULL";
+		os << ", ";
+	  }
+      if (arg_[arity_-1])
+		arg_[arity_-1]->typePrint(os, indent);
+	  else os << "NULL";
+	  if (opInfo[iopcode].needParen_) 
+		os << ") ";
+	}
+  }
+  else if ((opInfo[iopcode].prtType_ == OpNode::OpPrintType::INFIX) && (arity_ == 2)) {
+	if (opInfo[iopcode].needParen_) 
+	  os << "(";
+	if(arg_[0])
+	  arg_[0]->typePrint(os, indent);
+	else os << "NULL";
+	os << opInfo[iopcode].name_; 
+	if(arg_[1])
+	  arg_[1]->typePrint(os, indent);
 	else os << "NULL";
 	if (opInfo[iopcode].needParen_) 
 	  os << ")";

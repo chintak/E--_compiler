@@ -66,10 +66,16 @@ class SymTabEntry: public ProgramElem {
   { return !operator==(ste); };
 
   virtual void print(ostream& os, int indent=0) const {};
+  virtual void typePrint(ostream& os, int indent=0) const {};
   virtual void printST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
 					   bool linebreaks=true, int first=0, int last=0) const {
 	  if (symTab() != nullptr) 
 		symTab()->printST(os, ind, ldelim, rdelim, linebreaks, first, last);
+  }
+  virtual void typePrintST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
+					   bool linebreaks=true, int first=0, int last=0) const {
+	  if (symTab() != nullptr) 
+		symTab()->typePrintST(os, ind, ldelim, rdelim, linebreaks, first, last);
   }
 
  private:

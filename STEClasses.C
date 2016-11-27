@@ -15,12 +15,33 @@ void GlobalEntry::print(ostream& out, int indent) const
 	out << "\n";
 }
 
+void GlobalEntry::typePrint(ostream& out, int indent) const
+{
+	out << "\n";
+	typePrintST(out, indent, '\0', '\0');
+
+	out << "\n";
+	for (unsigned int i = 0; i < rules_.size(); i++) {
+		rules_[i]->typePrint(out, indent);
+	}
+	prtSpace(out, indent + STEP_INDENT);
+	out << "\n";
+}
+
 void ClassEntry::print(ostream& out, int indent) const
 {
 	prtSpace(out, indent);
 	out << "class "<< name();
 	out << ";";
 }
+
+void ClassEntry::typePrint(ostream& out, int indent) const
+{
+	prtSpace(out, indent);
+	out << "class "<< name();
+	out << ";";
+}
+
 
 void FunctionEntry::print(ostream& out, int indent) const
 {
@@ -70,6 +91,55 @@ void FunctionEntry::print(ostream& out, int indent) const
 	out << ";";
 }
 
+void FunctionEntry::typePrint(ostream& out, int indent) const
+{
+	const vector<const Type*> *argTypes = type()->argTypes();
+	int nrLocalVars;
+
+	type()->retType()->print(out, indent);
+	out << " " << name();
+
+	if (argTypes) {
+		typePrintST(out, indent, '(', ')', false, 0, argTypes->size());
+	} else {
+		out << "()";
+	}
+	if (body_) {
+		out << " {\n";
+		if (symTab()) {
+			if (argTypes) {
+				nrLocalVars = symTab()->size() - argTypes->size();
+			} else {
+				nrLocalVars = symTab()->size();
+			}
+		} else {
+			nrLocalVars = 0;
+		}
+		if (nrLocalVars) {
+			prtSpace(out, indent + STEP_INDENT);
+			if (argTypes)
+				typePrintST(out, indent + STEP_INDENT, '\0', '\0', true,
+					argTypes->size(), argTypes->size() + nrLocalVars);
+			else
+				typePrintST(out, indent + STEP_INDENT, '\0', '\0', true);
+		}
+
+		for (list<StmtNode*>::iterator it = body_->stmts()->begin(); it != body_->stmts()->end(); it++)
+			if (*it) {
+				cout << "check\n";
+				ostringstream oss;
+				(*it)->typePrint(oss, indent);
+				if (oss.str().empty())
+					continue;
+				(*it)->typePrint(out, indent);
+				endln(out, indent);
+			}
+		prtSpace(out, indent);
+		out << "}";
+	}
+	out << ";";
+}
+
 void EventEntry::print(ostream& out, int indent) const
 {
 	prtSpace(out, indent);
@@ -78,13 +148,34 @@ void EventEntry::print(ostream& out, int indent) const
 	out << ";";
 }
 
+void EventEntry::typePrint(ostream& out, int indent) const
+{
+	prtSpace(out, indent);
+	out << "event "<< name();
+	typePrintST(out, indent, '(', ')', false);
+	out << ";";
+}
+
 void VariableEntry::print(ostream& out, int indent) const
 {
+	cout << "First\n";
 	type()->print(out, indent);
 	out << " " << name();
 	if (initVal_) {
 		out << " = ";
 		initVal_->print(out, indent);
+	}
+	if (vkind_ == GLOBAL_VAR || vkind_ == LOCAL_VAR)
+		out << ";";
+}
+
+void VariableEntry::typePrint(ostream& out, int indent) const
+{
+	type()->print(out, indent);
+	out << " " << name();
+	if (initVal_) {
+		out << " = ";
+		initVal_->typePrint(out, indent);
 	}
 	if (vkind_ == GLOBAL_VAR || vkind_ == LOCAL_VAR)
 		out << ";";

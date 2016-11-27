@@ -67,6 +67,7 @@ class AstNode: public ProgramElem {
 
   virtual const Type* typeCheck() {return NULL;};
   virtual void print(ostream& os, int indent=0) const=0;
+  virtual void typePrint(ostream& os, int indent=0) const=0;
   virtual EFSA* codeGen() {return NULL;};
 
   virtual void renameRV(string prefix) {}; // new names start with given prefix
@@ -111,6 +112,7 @@ class ExprNode: public AstNode {
   void coercedType(const Type* type) { coercedType_ = type; }
 
   void print(ostream& os, int indent=0) const=0;
+  void typePrint(ostream& os, int indent=0) const=0;
 
  private:
   ExprNodeType exprType_;
@@ -135,6 +137,8 @@ class RefExprNode: public ExprNode {
   void symTabEntry(const SymTabEntry *ste)  { sym_ = ste;};
 
   void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
+
 
  private:
   string ext_;
@@ -191,6 +195,7 @@ class OpNode: public ExprNode {
     { return &arg_; }
 
   void print(ostream& os, int indent=0) const;  
+  void typePrint(ostream& os, int indent=0) const;  
   
  private: 
   unsigned int arity_;
@@ -211,6 +216,7 @@ class ValueNode: public ExprNode {
   ~ValueNode() {};
 
   void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
 
  private:
   /* val_ field is already included in ExprNode, so no new data members */
@@ -240,6 +246,7 @@ class InvocationNode: public ExprNode {
     { if (params_ != NULL && i < params_->size()) (*params_)[i] = arg;};
 
   void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
 
  private:
   vector<ExprNode*>* params_;
@@ -323,6 +330,7 @@ class PrimitivePatNode: public BasePatNode {
 
   //-const Type* typeCheck();
   void print(ostream& os, int indent=0) const; 
+  void typePrint(ostream& os, int indent=0) const; 
 
  private:
 
@@ -355,6 +363,7 @@ class PatNode: public BasePatNode {
   bool hasAnyOrOther() const;
 
   void print(ostream& os, int indent=0) const; 
+  void typePrint(ostream& os, int indent=0) const; 
 
  private: 
   PatNode(const PatNode&);
@@ -379,6 +388,7 @@ class StmtNode: public AstNode {
   StmtNodeKind stmtNodeKind() const { return skind_;}
 
   void print(ostream& os, int indent) const = 0;
+  void typePrint(ostream& os, int indent) const = 0;
  private:
   StmtNodeKind skind_;
 };
@@ -396,6 +406,11 @@ class ReturnStmtNode: public StmtNode {
 	os << "return "; 
 	if(expr_ != NULL) expr_->print(os, indent); else os << "NULL";};
 
+void typePrint(ostream& os, int indent) const {
+	os << "return "; 
+	if(expr_ != NULL) expr_->typePrint(os, indent); else os << "NULL";};
+
+
  private:
   ExprNode* expr_;
   FunctionEntry* fun_;
@@ -412,7 +427,19 @@ class ExprStmtNode: public StmtNode {
   //  { return new ExprStmtNode(*this); }
 
   void print(ostream& os, int indent) const { 
-	if (expr_ != NULL) { expr_->print(os, indent);}};
+	  cout << "4th\n";
+	  cout << "print1\n";
+	if (expr_ != NULL) { 
+		cout << "print2\n";
+		expr_->print(os, indent);}};
+
+  void typePrint(ostream& os, int indent) const { 
+	cout << "exprstmtnode\n";
+	if (expr_ != NULL) { 
+		expr_->typePrint(os, indent);
+	}
+	cout << "exprstmtnode\n";
+  };
 
  private:
   ExprNode* expr_;
@@ -436,6 +463,7 @@ class CompoundStmtNode: public StmtNode{
   
   void  printWithoutBraces(ostream& os, int indent) const;
   void  print(ostream& os, int indent) const;
+  void  typePrint(ostream& os, int indent) const;
 
  private:
   CompoundStmtNode(const CompoundStmtNode&);
@@ -463,6 +491,7 @@ class IfNode: public StmtNode{
   StmtNode* thenStmt() { return then_;};
 
   void print(ostream& os, int indent) const;
+  void typePrint(ostream& os, int indent) const;
 
  private: 
   ExprNode *cond_;
@@ -491,6 +520,7 @@ class RuleNode: public AstNode {
   StmtNode* reaction() { return reaction_; };   
 
   void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
 
  private:
   BlockEntry    *rste_;
