@@ -158,7 +158,6 @@ void EventEntry::typePrint(ostream& out, int indent) const
 
 void VariableEntry::print(ostream& out, int indent) const
 {
-	cout << "First\n";
 	type()->print(out, indent);
 	out << " " << name();
 	if (initVal_) {

@@ -31,7 +31,6 @@ RefExprNode::RefExprNode(string ext, const SymTabEntry* ste,
 {
 	ext_ = ext;
 	sym_ = ste;
-	cout << "setting type of refexpr\n";
 	type((Type *)ste->type());
 }
 
@@ -41,14 +40,12 @@ RefExprNode::RefExprNode(const RefExprNode& r): ExprNode(r)
 
 void RefExprNode::print(ostream& os, int indent) const
 {
-	cout <<  "6th\n";
 	os << ext_;
 }
 
 
 void RefExprNode::typePrint(ostream& os, int indent) const
 {
-	cout << "printing type of refexpr\n";
 	type()->print(os, indent);
 }
 
@@ -113,14 +110,11 @@ void IfNode::typePrint(ostream& os, int indent) const
 
 void ValueNode::print(ostream& os, int indent) const
 {
-	cout << "7th\n";
-	cout << "print5\n";
 	value()->print(os, indent);
 }
 
 void ValueNode::typePrint(ostream& os, int indent) const
 {
-	cout << "valuenode\n";
 	value()->type()->print(os, indent);
 }
 
@@ -180,7 +174,6 @@ PrimitivePatNode::PrimitivePatNode(EventEntry* ee, vector<VariableEntry*>* param
 
 void PrimitivePatNode::print(ostream& os, int indent) const
 {
-	cout << "3rd\n"; 
 	bool multiParams = false;
 	vector<Type*> *argTypes;
 
@@ -332,7 +325,6 @@ bool PatNode::hasAnyOrOther() const
 
 void CompoundStmtNode::print(ostream& os, int indent) const
 {
-	cout << "4th\n";
 	list <StmtNode*> *stmtList = stmts_;
 	bool first = true;
 
@@ -370,10 +362,7 @@ void CompoundStmtNode::typePrint(ostream& os, int indent) const
 	for (list<StmtNode*>::iterator it = stmtList->begin(); it != stmtList->end(); it++) {
 		ostringstream oss;
 		if (*it) {
-			if ((*it)->stmtNodeKind() == StmtNodeKind::EXPR)
-				cout << "oss ";
 			(*it)->typePrint(oss, indent);
-			cout << oss.str() << "...\n";
 			if (oss.str().empty()) {
 				continue;
 			}
@@ -409,7 +398,6 @@ RuleNode::RuleNode(BlockEntry *re, BasePatNode* pat, StmtNode* reaction,
 
 void RuleNode::print(ostream& os, int indent) const
 {
-	cout << "2nd\n";
 	prtSpace(os, STEP_INDENT);
 	pat_->print(os, indent);
 	os << "-->";
@@ -548,8 +536,6 @@ OpNode::OpNode(const OpNode &other):
 
 void 
 OpNode::print(ostream& os, int indent) const {
-	cout  << "5th\n";
-	cout << "print3\n";
 	int iopcode = static_cast<int>(opCode_);
   if (opInfo[iopcode].prtType_ == OpNode::OpPrintType::PREFIX) {
 	os << opInfo[iopcode].name_;
@@ -570,7 +556,6 @@ OpNode::print(ostream& os, int indent) const {
 	}
   }
   else if ((opInfo[iopcode].prtType_ == OpNode::OpPrintType::INFIX) && (arity_ == 2)) {
-	cout << "print4\n";
 	if (opInfo[iopcode].needParen_) 
 	  os << "(";
 	if(arg_[0])
@@ -588,7 +573,6 @@ OpNode::print(ostream& os, int indent) const {
 
 void 
 OpNode::typePrint(ostream& os, int indent) const {
-	cout << "opnode\n";
 	int iopcode = static_cast<int>(opCode_);
   if (opInfo[iopcode].prtType_ == OpNode::OpPrintType::PREFIX) {
 	os << opInfo[iopcode].name_;

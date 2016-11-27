@@ -427,18 +427,13 @@ class ExprStmtNode: public StmtNode {
   //  { return new ExprStmtNode(*this); }
 
   void print(ostream& os, int indent) const { 
-	  cout << "4th\n";
-	  cout << "print1\n";
 	if (expr_ != NULL) { 
-		cout << "print2\n";
 		expr_->print(os, indent);}};
 
   void typePrint(ostream& os, int indent) const { 
-	cout << "exprstmtnode\n";
 	if (expr_ != NULL) { 
 		expr_->typePrint(os, indent);
 	}
-	cout << "exprstmtnode\n";
   };
 
  private:
