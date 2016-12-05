@@ -61,8 +61,25 @@ class Type {
   static bool isData(TypeTag t) { return ((t >= VOID) && (t <= CLASS));}
   static bool isValid(TypeTag t) { return ((t >= VOID) && (t <= FUNCTION)); }
   static bool isScalar(TypeTag t) { return ((t >= BOOL) && (t <= DOUBLE)); }
+  static bool isSubType(TypeTag t1, TypeTag t2) {
+	  /* returns True if t1 is a subtype of t2*/
+	  if (!isValid(t2) || !isValid(t1)) return false;
+	  switch (t2) {
+		  case VOID:  return (t1 == VOID);
+		  case BOOL: return (isBool(t1));
+		  case STRING: return (isString(t1));
+		  case BYTE: return (t1==BYTE);
+		  case UINT: return isUnsigned(t1);
+		  case INT: return isIntegral(t1);
+		  case DOUBLE: return isNumeric(t1);
+		  case CLASS: return (t1==CLASS);
+		  case EVENT: return (t1==EVENT);
+		  case FUNCTION: return (t1==FUNCTION);
+		  default: return false;
+	  }
+  }
 
- /**************** Define data members of Type and then its methods */
+  /**************** Define data members of Type and then its methods */
 
  private:
   TypeTag tag_;
