@@ -163,7 +163,16 @@ function_decl: type function_header TOK_LPAREN formal_param_list TOK_RPAREN fun_
 	if ($2) {
 		stm.leaveScope();
 		FunctionEntry *fe = $2;
+		if ($1)
+		{
+			// cout << "return type : " << $1->name() << "\n";
+		}
+		else
+		{
+			cout << "return type is bad\n";
+		}
 		fe->type(new Type($4, $1));
+		
 		fe->body($6);
 	} else {
 		SymTabEntry *scopeEntry = stm.currentScope();
@@ -546,7 +555,28 @@ function_invocation: TOK_IDENT TOK_LPAREN expr_list TOK_RPAREN {
 		errMsg(string("\"") + $1 + string("\" is not a function or module name"));
 		$$ = NULL;
 	} else {
+		FunctionEntry *fe = (FunctionEntry*) ste;
+		vector<Type*>* args = fe->type()->argTypes();
+		vector<Type*>::iterator it;
+		vector<ExprNode*>::iterator it1 = $3->begin();
+		if ($3->size() == args->size())
+		{
+			for(it = args->begin();it != args->end(); ++it)
+			{
+				cout << "invoking function \n";
+				/*if ((*it)->name() !=  (*it1)->type()->name())
+				{
+					errMsg("args type mis-match in function");
+				}
+				++it1;*/
+			}
+		}
+		else
+		{
+			errMsg("invalid number of arguments");
+		}
 		$$ = new InvocationNode(ste, $3);
+		cout << "done invoking function \n";
 	}
 };
 
@@ -571,6 +601,30 @@ simple_stmt: TOK_RETURN expr TOK_SEMICOLON {
 	SymTabEntry *ste = stm.currentScope();
 	if (ste->kind() != SymTabEntry::Kind::FUNCTION_KIND) {
 		errMsg("Return statement is valid only within a function");
+	}
+	else
+	{
+		cout << "handling return statement\n";
+		FunctionEntry *fe =(FunctionEntry*) ste;
+		cout << "return type : " << fe->name() << "\n";
+
+		if (fe)
+		{
+			cout << "function ptr not null\n";
+		}
+		if (fe->type())
+		{
+			cout << "function type ptr not null\n";
+
+		}
+		if (fe->type()->argTypes())
+		{
+			cout << "function ret type ptr not null\n";
+		}
+		if (fe && fe->type() && fe->type()->retType())
+		{
+			errMsg("return type mis-match");
+		}
 	}
 	$$ = new ReturnStmtNode($2, (FunctionEntry*)ste);
 }
