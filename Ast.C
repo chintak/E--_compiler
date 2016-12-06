@@ -115,12 +115,17 @@ void ValueNode::print(ostream& os, int indent) const
 
 void ValueNode::typePrint(ostream& os, int indent) const
 {
+	if (coercedType()) {
+		os << "(";
+		coercedType()->print(os, indent);
+		os << ")";  
+	}
 	value()->type()->print(os, indent);
 }
 
 InvocationNode::InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param,
 		int line, int column, string file):
-ExprNode(ExprNode::ExprNodeType::INV_NODE, NULL, line, column, file) {
+	ExprNode(ExprNode::ExprNodeType::INV_NODE, NULL, line, column, file) {
 	params_ = param;
 	ste_ = ste;
 }

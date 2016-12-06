@@ -33,6 +33,7 @@ class GlobalEntry: public SymTabEntry {
 
   void print(ostream&, int indent=0) const;
   void typePrint(ostream&, int indent=0) const;
+  const Type* typeCheck();
 
  private:
   vector<RuleNode*> rules_;
@@ -84,6 +85,7 @@ class VariableEntry: public SymTabEntry {
 
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
+  const Type *typeCheck();
 
  private:
   VarKind vkind_;

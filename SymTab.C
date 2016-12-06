@@ -147,3 +147,19 @@ SymTab::typePrintST(ostream& os, int indent, char leftdelim, char rightdelim,
   if (leftdelim != '\0') // This is not a typo -- we shd check leftdelim
 	os << rightdelim; 
 }
+
+const Type*
+SymTab::typeCheckST() {
+  int i; SymTab::iterator it = begin();
+
+  for (i=0, it=begin();
+	   (it != end()) ; i++, ++it)  {
+	SymTabEntry *ste = (SymTabEntry *)(*it);
+	  if ((ste->kind() != SymTabEntry::Kind::RULE_BLOCK_KIND) && 
+		  (ste->kind() != SymTabEntry::Kind::EVENT_BLOCK_KIND) && 
+		  (ste->name() != "any")) {
+		ste->typeCheck();
+	  }
+	}
+  return NULL;
+}

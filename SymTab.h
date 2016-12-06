@@ -4,6 +4,7 @@
 #include <string>
 #include <hash_fun.h>
 #include <ext/hash_map>
+#include "Type.h"
 using namespace std;
 
 class SymTabEntry;
@@ -64,9 +65,11 @@ class SymTab {
   virtual void printST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
 					   bool linebreaks=true, int first=0, int last=0) const;
   void typePrint(ostream& os,int indent=0) const {typePrintST(os, indent);};
+  const Type *typeCheck() {return typeCheckST();};
   virtual void typePrintST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
 					   bool linebreaks=true, int first=0, int last=0) const;
 
+  const Type *typeCheckST();
   const_iterator begin() const { return const_iterator(first_); };
   iterator begin() { return iterator(first_); };
   // End of list is indicated when the iterator's current pointer

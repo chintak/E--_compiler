@@ -28,6 +28,15 @@ void GlobalEntry::typePrint(ostream& out, int indent) const
 	out << "\n";
 }
 
+const Type* GlobalEntry::typeCheck()
+{
+	typeCheckST();
+
+	for (unsigned int i = 0; i < rules_.size(); i++) {
+		rules_[i]->typeCheck();
+	}
+	return NULL;
+}
 void ClassEntry::print(ostream& out, int indent) const
 {
 	prtSpace(out, indent);
@@ -180,6 +189,26 @@ void VariableEntry::typePrint(ostream& out, int indent) const
 		out << ";";
 }
 
+const Type* VariableEntry::typeCheck()
+{
+	if (initVal_) {
+		bool res;
+		Type::TypeTag l, r;
+		r = initVal_->typeCheck()->tag();
+		l = typeTag();
+		res = Type::isSubType(r, l) ;
+		if (res) {
+			if (l != r) {
+				initVal_->coercedType(type());
+			} 
+			return type();
+		} else {
+			errMsg("err");
+			return NULL;
+		}
+	}
+	return NULL;
+}
 void BlockEntry::print(ostream& out, int indent) const
 {
 

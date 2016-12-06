@@ -66,7 +66,8 @@ class SymTabEntry: public ProgramElem {
   { return !operator==(ste); };
 
   virtual void print(ostream& os, int indent=0) const {};
-  virtual void typePrint(ostream& os, int indent=0) const {};
+   virtual void typePrint(ostream& os, int indent=0) const {};
+virtual const Type *typeCheck() {return NULL;};
   virtual void printST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
 					   bool linebreaks=true, int first=0, int last=0) const {
 	  if (symTab() != nullptr) 
@@ -76,6 +77,11 @@ class SymTabEntry: public ProgramElem {
 					   bool linebreaks=true, int first=0, int last=0) const {
 	  if (symTab() != nullptr) 
 		symTab()->typePrintST(os, ind, ldelim, rdelim, linebreaks, first, last);
+  }
+  virtual const Type *typeCheckST() {
+	  if (symTab() != nullptr) 
+		return symTab()->typeCheckST();
+	  return NULL;
   }
 
  private:
