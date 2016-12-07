@@ -23,10 +23,10 @@ class VariableEntry;
 /*****************************************************************************
    Here is the class hierarchy:
                                                ProgramElem
-											       |
+											                            |
                                                 AstNode
      +--------------------------------------------+----------------+
-     |		         |                 |                           | 
+     |		         |                 |                             | 
  BasePatNode      ExprNode          RuleNode                    StmtNode
      |               |                                             |
      |               |                                             |
@@ -135,7 +135,6 @@ class RefExprNode: public ExprNode {
   void symTabEntry(const SymTabEntry *ste)  { sym_ = ste;};
 
   void print(ostream& os, int indent=0) const;
-
  private:
   string ext_;
   const SymTabEntry* sym_;
@@ -190,7 +189,8 @@ class OpNode: public ExprNode {
   vector<ExprNode*>* args() 
     { return &arg_; }
 
-  void print(ostream& os, int indent=0) const;  
+  void print(ostream& os, int indent=0) const;
+  const Type* typeCheck();
   
  private: 
   unsigned int arity_;
