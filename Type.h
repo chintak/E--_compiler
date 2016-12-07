@@ -62,23 +62,28 @@ class Type {
   static bool isValid(TypeTag t) { return ((t >= VOID) && (t <= FUNCTION)); }
   static bool isScalar(TypeTag t) { return ((t >= BOOL) && (t <= DOUBLE)); }
   static bool isSubType(TypeTag t1, TypeTag t2) {
-  /* returns True if t1 is a subtype of t2*/
-
-  if !(isValid(t2) && isValid(t1)) return false;
-  switch (t2) {
-    case VOID:  return (t1 == VOID);
-    case BOOL: return (isBool(t1));
-    case STRING: return (isString(t1));
-    case BYTE: return (t1==BYTE);
-    case UINT: return isUnSigned(t1);
-    case INT: return isIntegral(t1);
-    case DOUBLE: return isNumeric(t1);
-    case CLASS: return (t1==CLASS);
-    case EVENT: return (t1==EVENT);
-    case FUNCTION: return (t1==FUNCTION);
-    default: return false;
+    /* returns True if t1 is a subtype of t2*/
+    if (!(isValid(t2) && isValid(t1))) return false;
+    switch (t2) {
+      case VOID:  return (t1 == VOID);
+      case BOOL: return (isBool(t1));
+      case STRING: return (isString(t1));
+      case BYTE: return (t1==BYTE);
+      case UINT: return isUnsigned(t1);
+      case SIGNED: return isSigned(t1);
+      case INTEGRAL:
+      case INT: return isIntegral(t1);
+      case NUMERIC:
+      case DOUBLE: return isNumeric(t1);
+      case NATIVE:
+      case PRIMITIVE: return isPrimitive(t1);
+      case SCALAR: return isScalar(t1);
+      case CLASS: return (t1==CLASS);
+      case EVENT: return (t1==EVENT);
+      case FUNCTION: return (t1==FUNCTION);
+      default: return false;
+    }
   }
-}
 
  /**************** Define data members of Type and then its methods */
 

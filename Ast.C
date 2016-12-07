@@ -419,22 +419,38 @@ OpNode::print(ostream& os, int indent) const {
 }
 
 const Type* OpNode::typeCheck() {
+	Type::TypeTag lType, rType, actLType, actRType;
 	int iopcode = int(opCode_);
 	if (arity_ == 2) {
-		if (arg_[0] && Type::isSubType(arg_[0]->type()->tag(), opInfo[iopcode].argType_[0])) {
-			if (arg_[1] && Type::isSubType(arg_[1]->type()->tag(), opInfo[iopcode].argType_[1])) {
+		lType = arg_[0]->type()->tag();
+		rType = arg_[1]->type()->tag();
+		actLType = opInfo[iopcode].argType_[0];
+		actRType = opInfo[iopcode].argType_[1];
+		if (arg_[0] && Type::isSubType(lType, actLType)) {
+			if (lType != actLType) {
+				coercedType(new Type(actLType));
+			}
+			if (arg_[1] && Type::isSubType(rType, actRType)) {
+				if (rType != actRType) {
+					coercedType(new Type(actRType));
+				}
 				return (new Type(opInfo[iopcode].outType_));
 			}
 			else {
-				errMsg(string("Incompatible type for argument 1 for operator ") + opInfo[iopcode].name_);
+				errMsg(string("Incompatible type for argument 2 for operator ") + opInfo[iopcode].name_);
 			}
 		}
 		else {
-			errMsg(string("Incompatible type for argument 2 for operator ") +  opInfo[iopcode].name_);
+			errMsg(string("Incompatible type for argument 1 for operator ") +  opInfo[iopcode].name_);
 		}
 	}
 	if (arity_ == 1) {
-		if (arg_[0] && Type::isSubType(arg_[0]->type()->tag(), opInfo[iopcode].argType_[0])) {
+		lType = arg_[0]->type()->tag();
+		actLType = opInfo[iopcode].argType_[0];
+		if (arg_[0] && Type::isSubType(lType, actLType)) {
+			if (lType != actLType) {
+				coercedType(new Type(actLType));
+			}
 			return (new Type(opInfo[iopcode].outType_));
 		}
 		else {
