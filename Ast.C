@@ -612,3 +612,55 @@ OpNode::typePrint(ostream& os, int indent) const {
   }
   else internalErr("Unhandled case in OpNode::print");
 }
+
+const Type* OpNode::typeCheck() {
+	Type::TypeTag lType, rType, actLType, actRType;
+	int iopcode = int(opCode_);
+	if (arity_ == 2) {
+		lType = arg_[0]->type()->tag();
+		rType = arg_[1]->type()->tag();
+		actLType = opInfo[iopcode].argType_[0];
+		actRType = opInfo[iopcode].argType_[1];
+		if (arg_[0] && Type::isSubType(lType, actLType)) {
+			if (lType != actLType) {
+				coercedType(new Type(actLType));
+			}
+			if (arg_[1] && Type::isSubType(rType, actRType)) {
+				if (rType != actRType) {
+					coercedType(new Type(actRType));
+				}
+				return (new Type(opInfo[iopcode].outType_));
+			}
+			else {
+				errMsg(string("Incompatible type for argument 2 for operator ") + opInfo[iopcode].name_);
+			}
+		}
+		else {
+			errMsg(string("Incompatible type for argument 1 for operator ") +  opInfo[iopcode].name_);
+		}
+	}
+	if (arity_ == 1) {
+
+		lType = arg_[0]->type()->tag();
+		actLType = opInfo[iopcode].argType_[0];
+		cout << lType << "\t" << actLType << endl;
+		if (arg_[0] && Type::isSubType(lType, actLType)) {
+			if (lType != actLType) {
+				coercedType(new Type(actLType));
+			}
+			return (new Type(opInfo[iopcode].outType_));
+		}
+		else {
+			errMsg(string("Incompatible type for argument for operator ") +  opInfo[iopcode].name_);
+		}
+	}
+	if (arity_ == OpNode::VARIABLE) {
+		for (unsigned int i=0; i<arity_; i++) {
+			if (!(arg_[i] && Type::isSubType(arg_[i]->type()->tag(), opInfo[iopcode].argType_[0]))) {
+				errMsg(string("Incompatible type for argument") + to_string(i) + string("for operator ") + opInfo[iopcode].name_);
+			}
+		}
+		return (new Type(opInfo[iopcode].outType_));
+	}
+	return (new Type(Type::TypeTag::ERROR));
+}
