@@ -329,7 +329,7 @@ class PrimitivePatNode: public BasePatNode {
   bool hasNeg() const;
   bool hasAnyOrOther() const;
 
-  //-const Type* typeCheck();
+  const Type* typeCheck();
   void print(ostream& os, int indent=0) const; 
   void typePrint(ostream& os, int indent=0) const; 
 
@@ -365,6 +365,7 @@ class PatNode: public BasePatNode {
 
   void print(ostream& os, int indent=0) const; 
   void typePrint(ostream& os, int indent=0) const; 
+  const Type* typeCheck();
 
  private: 
   PatNode(const PatNode&);
@@ -517,6 +518,7 @@ class RuleNode: public AstNode {
 
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
+  const Type* typeCheck();
 
  private:
   BlockEntry    *rste_;
