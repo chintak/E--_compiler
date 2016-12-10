@@ -15,7 +15,7 @@ ExprNode::ExprNode(ExprNodeType et, const Value* val, int line, int column,
 				   string file):
 	AstNode(AstNode::NodeType::EXPR_NODE, line, column, file)
 {
-	exprType_ = et;
+	exprType_= et;
 	val_ = val;
 	/* coercedType_ */
 }
