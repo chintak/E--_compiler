@@ -118,6 +118,7 @@ class FunctionEntry: public SymTabEntry {
 
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
+  const Type* typeCheck();
 
  private:
   CompoundStmtNode* body_;

@@ -247,6 +247,7 @@ class InvocationNode: public ExprNode {
 
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
+  const Type* typeCheck();
 
  private:
   vector<ExprNode*>* params_;

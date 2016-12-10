@@ -686,3 +686,20 @@ const Type* OpNode::typeCheck() {
 	// }
 	return (new Type(Type::TypeTag::ERROR));
 }
+
+const Type* InvocationNode::typeCheck() {
+	std::cout << "in InvocationNode typecheck\n";
+	FunctionEntry *fe = (FunctionEntry*) symTabEntry();
+	vector<Type*>* argTypes = fe->type()->argTypes();
+	vector<Type*>::iterator it = argTypes->begin();
+	int i = 0;
+	for (it = argTypes->begin(); it != argTypes->end(); ++it)
+	{
+		if ((*it)->name() != param(i)->coercedType()->name())
+		{
+			errMsg(string("Incompatible Type for Argument #") + to_string(i) + string("Expected: ") + string((*it)->name()) + string("Received: ") + string(param(i)->coercedType()->name()));
+		}
+	}
+	return NULL;
+
+}

@@ -149,6 +149,24 @@ void FunctionEntry::typePrint(ostream& out, int indent) const
 	out << ";";
 }
 
+const Type* FunctionEntry::typeCheck()
+{
+	std::cout << "in function entry typecheck\n";
+	typeCheckST();
+
+	if (body_) {
+		for (list<StmtNode*>::iterator it = body_->stmts()->begin(); it != body_->stmts()->end(); it++)
+		{
+			if (*it) {
+				cout << "check\n";
+				ostringstream oss;
+				(*it)->typeCheck();;
+			}
+		}
+	}
+	return NULL;
+}
+
 void EventEntry::print(ostream& out, int indent) const
 {
 	prtSpace(out, indent);
