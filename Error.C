@@ -18,7 +18,7 @@ static void msg(const string& type, const string& errorMsg, int line, int col, c
   cerr << type << errorMsg << endl;
 }
 
-void 
+void
 internalError(const string& s, int line, const char* file) {
   msg("Internal error: ", s, line, 0, file);
 }

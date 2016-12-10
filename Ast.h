@@ -23,10 +23,10 @@ class VariableEntry;
 /*****************************************************************************
    Here is the class hierarchy:
                                                ProgramElem
-											                            |
+                                                                        |
                                                 AstNode
      +--------------------------------------------+----------------+
-     |		         |                 |                             | 
+     |               |                 |                             |
  BasePatNode      ExprNode          RuleNode                    StmtNode
      |               |                                             |
      |               |                                             |
@@ -45,21 +45,21 @@ class VariableEntry;
 PrimitivePatNode    PatNode
 
 ******************************************************************************/
-    
+
 class AstNode: public ProgramElem {
  public:
   enum class NodeType  {
     PAT_NODE,
-    EXPR_NODE, 
-    REACTION_NODE, 
-    STMT_NODE, 
-    SEQUENCE_NODE, 
+    EXPR_NODE,
+    REACTION_NODE,
+    STMT_NODE,
+    SEQUENCE_NODE,
     RULE_NODE
   };
 
- public: 
+ public:
   AstNode(NodeType nt, int line=0, int column=0, string file="");
-  AstNode(const AstNode&); // copy constructor 
+  AstNode(const AstNode&); // copy constructor
   virtual ~AstNode() {};
   //virtual AstNode* clone() = 0;
 
@@ -72,10 +72,10 @@ class AstNode: public ProgramElem {
 
   virtual void renameRV(string prefix) {}; // new names start with given prefix
   virtual bool operator==(const AstNode&) const { return false; };
-  virtual bool operator!=(const AstNode& a) const 
+  virtual bool operator!=(const AstNode& a) const
   { return !operator==(a); };
-  
- private: 
+
+ private:
   NodeType nodeType_;
   const AstNode* operator=(const AstNode& other); /* disable asg */
 };
@@ -89,18 +89,18 @@ inline ostream& operator<<(ostream& os, const AstNode& an) {
 class ExprNode: public AstNode {
  public:
   enum class ExprNodeType   {
-    REF_EXPR_NODE, 
-    OP_NODE, 
-    VALUE_NODE, 
+    REF_EXPR_NODE,
+    OP_NODE,
+    VALUE_NODE,
     INV_NODE
    };
 
  public:
   ExprNode(ExprNodeType et, const Value* val=0, int line=0, int column=0,
-		   string file=""); // val is saved, but not copied
+           string file=""); // val is saved, but not copied
   ExprNode(const ExprNode&);
   virtual ~ExprNode() {};
- 
+
   virtual ExprNode* clone() const=0;
 
   ExprNodeType exprNodeType() const { return exprType_;};
@@ -117,27 +117,28 @@ class ExprNode: public AstNode {
  private:
   ExprNodeType exprType_;
   const Value *val_; // reference semantics for val_ and coercedType_
-  const Type* coercedType_; 
+  const Type* coercedType_;
 };
 
 /****************************************************************/
 class RefExprNode: public ExprNode {
  public:
-  RefExprNode(string ext, const SymTabEntry* ste=NULL, 
-	      int line=0, int column=0, string file="");
+  RefExprNode(string ext, const SymTabEntry* ste=NULL,
+          int line=0, int column=0, string file="");
   RefExprNode(const RefExprNode&);
   ExprNode* clone() const { return new RefExprNode(*this); }
 
   ~RefExprNode() {};
 
   string ext() const { return ext_;};
-  void ext(string str) { ext_ = str;}; 
+  void ext(string str) { ext_ = str;};
 
   const SymTabEntry* symTabEntry() const { return sym_;};
   void symTabEntry(const SymTabEntry *ste)  { sym_ = ste;};
 
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
+  const Type* typeCheck();
 
  private:
   string ext_;
@@ -151,53 +152,55 @@ class RefExprNode: public ExprNode {
 class OpNode: public ExprNode {
  public:
   enum class OpCode {
-    UMINUS, PLUS, MINUS, MULT, DIV, MOD, 
+    UMINUS, PLUS, MINUS, MULT, DIV, MOD,
     EQ, NE, GT, LT, GE, LE,
-    AND, OR, NOT, 
+    AND, OR, NOT,
     BITNOT, BITAND, BITOR, BITXOR, SHL, SHR,
     ASSIGN, PRINT, INVALID
   };
-    
+
   enum class OpPrintType {PREFIX, INFIX, POSTFIX};
   struct OpInfo {
     OpCode code_;
     const char* name_;
     int arity_;
-		int needParen_;
+    int needParen_;
     OpPrintType prtType_;
-    Type::TypeTag argType_[3]; 
+    Type::TypeTag argType_[3];
     // operators with > 2 args can be supported
-    // only if types of args k through N are identical, for 1 <= k <= 3, 
+    // only if types of args k through N are identical, for 1 <= k <= 3,
     // and are given by argType[k-1]
     Type::TypeTag outType_;
-		const char *typeConstraints_;
+        const char *typeConstraints_;
   };
 
  public:
   static const int VARIABLE = 100;
  public:
   OpNode(OpCode op, ExprNode *l, ExprNode *r=NULL,
-	 int line=0, int column=0, string file="");
+     int line=0, int column=0, string file="");
   OpNode(const OpNode&);
   ExprNode* clone() const { return new OpNode(*this); }
   ~OpNode() {};
 
   OpCode opCode() const { return opCode_;};
-  const ExprNode* arg(unsigned int i) const 
+  const ExprNode* arg(unsigned int i) const
     { return (i < arg_.size())? arg_[i] : NULL; };
   unsigned int arity() const { return arity_; }
 
   void opCode(OpCode a) { opCode_ = a; };
-  ExprNode* arg(unsigned int i) 
+  ExprNode* arg(unsigned int i)
     { return (i < arg_.size())? arg_[i] : NULL; };
-  vector<ExprNode*>* args() 
+  vector<ExprNode*>* args()
     { return &arg_; }
 
-  void print(ostream& os, int indent=0) const;  
-  void typePrint(ostream& os, int indent=0) const;  
+  void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
-  
- private: 
+  Type* opTypeCheck(ExprNode* t1, ExprNode* t2, Type::TypeTag lFormType,
+    Type::TypeTag rFormType, Type::TypeTag retTag, bool coerce);
+
+ private:
   unsigned int arity_;
   OpCode   opCode_;
   vector<ExprNode*> arg_;
@@ -217,6 +220,7 @@ class ValueNode: public ExprNode {
 
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
+  const Type* typeCheck();
 
  private:
   /* val_ field is already included in ExprNode, so no new data members */
@@ -227,8 +231,8 @@ class ValueNode: public ExprNode {
 class InvocationNode: public ExprNode {
   // Used to represent function invocation
  public:
-  InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param=0, 
-		 int line=0, int column=0, string file="");
+  InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param=0,
+         int line=0, int column=0, string file="");
   InvocationNode(const InvocationNode&);
   ExprNode* clone() const  { return new InvocationNode(*this); }
   ~InvocationNode() {};
@@ -238,11 +242,11 @@ class InvocationNode: public ExprNode {
   const vector<ExprNode*>* params() const { return params_;};
   vector<ExprNode*>* params() { return params_;}
   void params(vector<ExprNode*>* args){ params_ = args;};
-  const ExprNode* param(unsigned int i) const 
+  const ExprNode* param(unsigned int i) const
     { return (params_ != NULL && i < params_->size())? (const ExprNode*)((*params_)[i]) : NULL; };
   ExprNode* param(unsigned int i)
     { return (ExprNode*)((const InvocationNode*)this->param(i));}
-  void param(ExprNode* arg, unsigned int i) 
+  void param(ExprNode* arg, unsigned int i)
     { if (params_ != NULL && i < params_->size()) (*params_)[i] = arg;};
 
   void print(ostream& os, int indent=0) const;
@@ -271,24 +275,24 @@ class BasePatNode: public AstNode {
 
  public:
   BasePatNode(PatNodeKind pk, int ln=0, int col=0, string f=""):
-	AstNode(AstNode::NodeType::PAT_NODE, ln, col, f) {
-	parent_ = NULL; root_ = NULL; patKind_ = pk;};
+    AstNode(AstNode::NodeType::PAT_NODE, ln, col, f) {
+    parent_ = NULL; root_ = NULL; patKind_ = pk;};
   BasePatNode(const BasePatNode& bpn): AstNode(bpn) {
-	patKind_ = bpn.patKind_; parent_ = bpn.parent_; root_ = bpn.root_;}
+    patKind_ = bpn.patKind_; parent_ = bpn.parent_; root_ = bpn.root_;}
   ~BasePatNode() {};
-  //virtual BasepatNode* clone() const { return new BasePatNode(*this);}	
+  //virtual BasepatNode* clone() const { return new BasePatNode(*this);}
 
   PatNodeKind kind() const { return patKind_; };
   void kind(PatNodeKind p) {patKind_ = p;}
 
-  const BasePatNode* parent() const { return parent_; } 
-  BasePatNode* parent() { return parent_;} 
+  const BasePatNode* parent() const { return parent_; }
+  BasePatNode* parent() { return parent_;}
 
   virtual bool hasSeqOps() const=0;
   virtual bool hasNeg() const=0;
   virtual bool hasAnyOrOther() const=0;
   virtual bool isNegatable() const {
-	return ((!hasSeqOps()) && (!hasNeg())); }
+    return ((!hasSeqOps()) && (!hasNeg())); }
 
  private:
   PatNodeKind patKind_;
@@ -300,9 +304,9 @@ class BasePatNode: public AstNode {
 
 class PrimitivePatNode: public BasePatNode {
  public:
-  PrimitivePatNode(EventEntry* ee, vector<VariableEntry*>* params, 
-				   ExprNode* c=NULL,
-				   int line=0, int column=0, string file="");
+  PrimitivePatNode(EventEntry* ee, vector<VariableEntry*>* params,
+                   ExprNode* c=NULL,
+                   int line=0, int column=0, string file="");
   //PrimitivePatNode(const PrimitivePatNode& ppn);
   ~PrimitivePatNode() {};
   //BasePatNode* clone() { return new PrimitivePatNode(*this); }
@@ -310,28 +314,28 @@ class PrimitivePatNode: public BasePatNode {
   const EventEntry* event() const { return ee_; }
   EventEntry* event() { return ee_; }
 
-  const vector<const VariableEntry*>* params() const { 
-	return (vector<const VariableEntry*>*)params_; }
+  const vector<const VariableEntry*>* params() const {
+    return (vector<const VariableEntry*>*)params_; }
   vector<VariableEntry*>* params() { return params_; }
 
   const ExprNode* cond() const { return cond_; }
   ExprNode* cond() { return cond_; }
-  void cond(ExprNode* c) { cond_ = c;}
+  void cond(ExprNode* c);
 
   ExprNode* condition() { return condition_; }
   const ExprNode* condition() const { return condition_; }
 
-  const list<const OpNode*>& asgs() const { 
-	return (list<const OpNode*>&)asgs_; }  
-  list<OpNode*>& asgs() { return asgs_; }  
+  const list<const OpNode*>& asgs() const {
+    return (list<const OpNode*>&)asgs_; }
+  list<OpNode*>& asgs() { return asgs_; }
 
   bool hasSeqOps() const;
   bool hasNeg() const;
   bool hasAnyOrOther() const;
 
+  void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
-  void print(ostream& os, int indent=0) const; 
-  void typePrint(ostream& os, int indent=0) const; 
 
  private:
 
@@ -339,19 +343,19 @@ class PrimitivePatNode: public BasePatNode {
   vector<VariableEntry*>* params_;
   /* cond_ may contain assignments as well as other expressions */
   /* condition_ contains all expresions in cond_ other than assignments */
-  ExprNode* cond_;      
-  ExprNode* condition_; 
+  ExprNode* cond_;
+  ExprNode* condition_;
   list<OpNode*> asgs_;
 };
 
 /****************************************************************/
 class PatNode: public BasePatNode {
- public: 
+ public:
   PatNode(int line=0, int column=0, string file="");
   PatNode(PatNodeKind pk, BasePatNode *p1, BasePatNode*p2=NULL, int line=0, int column=0, string file="");
-  
+
   ~PatNode() {};
-  //AstNode* clone() 
+  //AstNode* clone()
   //  { return new PatNode(*this); }
 
   const BasePatNode* pat1() const { return pat1_; }
@@ -363,11 +367,11 @@ class PatNode: public BasePatNode {
   bool hasSeqOps() const;
   bool hasAnyOrOther() const;
 
-  void print(ostream& os, int indent=0) const; 
-  void typePrint(ostream& os, int indent=0) const; 
+  void print(ostream& os, int indent=0) const;
+  void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
 
- private: 
+ private:
   PatNode(const PatNode&);
 
   BasePatNode *pat1_;
@@ -380,17 +384,18 @@ class PatNode: public BasePatNode {
 class StmtNode: public AstNode {
  public:
   enum class StmtNodeKind { ILLEGAL=-1, EXPR, IF, COMPOUND, RETURN};
- public: 
+ public:
   StmtNode(StmtNodeKind skm, int line=0, int column=0, string file=""):
-	AstNode(AstNode::NodeType::STMT_NODE, line,column,file) { skind_ = skm; };
+    AstNode(AstNode::NodeType::STMT_NODE, line,column,file) { skind_ = skm; };
   ~StmtNode() {};
-  //AstNode* clone() 
+  //AstNode* clone()
   //  { return new StmtNode(*this); }
 
   StmtNodeKind stmtNodeKind() const { return skind_;}
 
   void print(ostream& os, int indent) const = 0;
   void typePrint(ostream& os, int indent) const = 0;
+  const Type* typeCheck() = 0;
  private:
   StmtNodeKind skind_;
 };
@@ -399,19 +404,20 @@ class StmtNode: public AstNode {
 
 class ReturnStmtNode: public StmtNode {
  public:
-  ReturnStmtNode(ExprNode *e, FunctionEntry* fe, 
-				 int line=0, int column=0, string file=""):
+  ReturnStmtNode(ExprNode *e, FunctionEntry* fe,
+                 int line=0, int column=0, string file=""):
     StmtNode(StmtNode::StmtNodeKind::RETURN,line,column,file) { expr_ = e; fun_ = fe;};
   ~ReturnStmtNode() {};
 
   void print(ostream& os, int indent) const {
-	os << "return "; 
-	if(expr_ != NULL) expr_->print(os, indent); else os << "NULL";};
+    os << "return ";
+    if(expr_ != NULL) expr_->print(os, indent); else os << "NULL";};
 
-void typePrint(ostream& os, int indent) const {
-	os << "return "; 
-	if(expr_ != NULL) expr_->typePrint(os, indent); else os << "NULL";};
+  void typePrint(ostream& os, int indent) const {
+      os << "return ";
+      if(expr_ != NULL) expr_->typePrint(os, indent); else os << "NULL";};
 
+  const Type* typeCheck();
 
  private:
   ExprNode* expr_;
@@ -425,18 +431,19 @@ class ExprStmtNode: public StmtNode {
   ExprStmtNode(ExprNode* e, int line=0, int column=0, string file=""):
     StmtNode(StmtNode::StmtNodeKind::EXPR,line,column,file) { expr_ = e; };
   ~ExprStmtNode() {};
-  //AstNode* clone() 
+  //AstNode* clone()
   //  { return new ExprStmtNode(*this); }
 
-  void print(ostream& os, int indent) const { 
-	if (expr_ != NULL) { 
-		expr_->print(os, indent);}};
+  void print(ostream& os, int indent) const {
+    if (expr_ != NULL) {
+        expr_->print(os, indent);}};
 
-  void typePrint(ostream& os, int indent) const { 
-	if (expr_ != NULL) { 
-		expr_->typePrint(os, indent);
-	}
+  void typePrint(ostream& os, int indent) const {
+    if (expr_ != NULL) {
+        expr_->typePrint(os, indent);
+    }
   };
+  const Type* typeCheck();
 
  private:
   ExprNode* expr_;
@@ -445,22 +452,23 @@ class ExprStmtNode: public StmtNode {
 /****************************************************************/
 
 class CompoundStmtNode: public StmtNode{
- public: 
+ public:
   CompoundStmtNode(list<StmtNode*> *Slist, int ln=0, int col=0, string fl=""):
-	StmtNode(StmtNode::StmtNodeKind::COMPOUND, ln,col,fl) { stmts_ = Slist;};
+    StmtNode(StmtNode::StmtNodeKind::COMPOUND, ln,col,fl) { stmts_ = Slist;};
   ~CompoundStmtNode() { };
-  //AstNode* clone() 
+  //AstNode* clone()
   //  { return new CompoundStmtNode(*this); }
 
   const list<StmtNode*>* stmts() const { return stmts_;}
 
   list<StmtNode*>* stmts() { return stmts_;}
-  void add(StmtNode *s) 
+  void add(StmtNode *s)
     { if(stmts_ != NULL) stmts_->push_back(s); };
-  
+
   void  printWithoutBraces(ostream& os, int indent) const;
   void  print(ostream& os, int indent) const;
   void  typePrint(ostream& os, int indent) const;
+  const Type* typeCheck();
 
  private:
   CompoundStmtNode(const CompoundStmtNode&);
@@ -471,26 +479,27 @@ class CompoundStmtNode: public StmtNode{
 /****************************************************************/
 
 class IfNode: public StmtNode{
- public: 
-  
-  IfNode(ExprNode* cond, StmtNode* thenStmt, 
-		 StmtNode* elseStmt=NULL, int line=0, int column=0, string file="");
+ public:
+
+  IfNode(ExprNode* cond, StmtNode* thenStmt,
+         StmtNode* elseStmt=NULL, int line=0, int column=0, string file="");
   ~IfNode(){};
-  //AstNode* clone() 
+  //AstNode* clone()
   //  { return new IfNode(*this); }
 
   const ExprNode* cond() const {return cond_;}
   const StmtNode* elseStmt() const { return else_;};
   const StmtNode* thenStmt() const  { return then_;};
 
-  ExprNode* cond() {return cond_;}      
+  ExprNode* cond() {return cond_;}
   StmtNode* elseStmt() { return else_;};
   StmtNode* thenStmt() { return then_;};
 
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
+  const Type* typeCheck();
 
- private: 
+ private:
   ExprNode *cond_;
   StmtNode *then_, *else_;
 
@@ -501,20 +510,20 @@ class IfNode: public StmtNode{
 
 class RuleNode: public AstNode {
  public:
-  RuleNode(BlockEntry *re, BasePatNode* pat, StmtNode* reaction, 
-	   int line=0, int column=0, string file="");
+  RuleNode(BlockEntry *re, BasePatNode* pat, StmtNode* reaction,
+       int line=0, int column=0, string file="");
   ~RuleNode() {};
-  //AstNode* clone() 
+  //AstNode* clone()
   //  { return new RuleNode(*this); }
 
   const BlockEntry* ruleEntry() const { return rste_; };
   BlockEntry* ruleEntry() { return rste_; };
 
   const BasePatNode* pat() const { return pat_; };
-  BasePatNode* pat() { return pat_; };              
+  BasePatNode* pat() { return pat_; };
 
-  const StmtNode* reaction() const { return reaction_; };   
-  StmtNode* reaction() { return reaction_; };   
+  const StmtNode* reaction() const { return reaction_; };
+  StmtNode* reaction() { return reaction_; };
 
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
@@ -524,7 +533,7 @@ class RuleNode: public AstNode {
   BlockEntry    *rste_;
   BasePatNode *pat_;
   StmtNode *reaction_;
-   
+
   RuleNode(const RuleNode&);
 };
 

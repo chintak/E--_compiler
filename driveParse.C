@@ -53,7 +53,7 @@ bool genBinCode;
 bool genSharedLib;
 bool genDottyCode;
 bool genPrologCode;
-string outFileSuffix;  
+string outFileSuffix;
 extern FILE* yyin;
 
 void
@@ -61,7 +61,7 @@ printUsage(const char* cmd) {
   cerr << "Usage: " << cmd << //" [-v <num>] "
 	"[-I include_dir] [-L<library directory>]\n   [-l<library>]"
     "[-Dmacro[=defn]] [-Uname] " //[-t <target language>]\n   "
-    "[-o <output file>] <input file>\n" 
+    "[-o <output file>] <input file>\n"
     /*"\t-v: debugging\n"
     "\t\t0: none\n"
     "\t\t1: print AST 'out' file\n"
@@ -81,7 +81,7 @@ printUsage(const char* cmd) {
     "specified independently using the environment variable CFLAGS.\n";
 }
 
-int 
+int
 parseOptions(int argc, char* argv[]) {
   opterr = 0; // Suppress printing of errors by getopt.
 
@@ -113,7 +113,7 @@ parseOptions(int argc, char* argv[]) {
   if (genSharedLib)
 	outFileSuffix = ".so";
 
-  if (*inputFile == '\0') 
+  if (*inputFile == '\0')
     return -1;
 
   if (outputFile == "") {
@@ -122,7 +122,7 @@ parseOptions(int argc, char* argv[]) {
 	  string sinputFile(inputFile);
 	  if ((pos = sinputFile.rfind('/')) == string::npos)
 		outputFile = "lib" + sinputFile;
-	  else outputFile = 
+	  else outputFile =
 			 sinputFile.substr(0, pos) + "/lib" + sinputFile.substr(pos+1);
 	}
 	else outputFile = inputFile;
@@ -135,7 +135,7 @@ parseOptions(int argc, char* argv[]) {
   return 0;
 }
 
-int 
+int
 main(int argc, char *argv[], char *envp[]) {
 
   string ccCmd;
@@ -167,7 +167,7 @@ main(int argc, char *argv[], char *envp[]) {
 
   while (token = yylex()) {
 	if (token == TOK_SYNTAX_ERROR) {
-	  cout << yyfilename << ":" << yylinenum 
+	  cout << yyfilename << ":" << yylinenum
 		   << ": Error: Unrecognized token `" << yytext << "'\n";
 	}
 	else {
@@ -209,8 +209,8 @@ main(int argc, char *argv[], char *envp[]) {
   stm.leaveToScope(SymTabEntry::Kind::GLOBAL_KIND);
   GlobalEntry *ge = (GlobalEntry*)(stm.currentScope());
   if (ge != NULL) {
-	cout << "Finished parsing, here is the AST\n";
-//	ge->print(cout, 0);
+	// cout << "Finished parsing, here is the AST\n";
+	// ge->print(cout, 0);
 	ge->typeCheck();
 	ge->typePrint(cout, 0);
   }

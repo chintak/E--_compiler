@@ -121,7 +121,7 @@ union YYSTYPE
 {
 #line 17 "E--_parser.y++" /* yacc.c:1909  */
 
-  unsigned int 		 uVal;
+  unsigned int       uVal;
   double             dVal;
   char*              cVal;
   vector<string>*    strVector;
@@ -133,9 +133,9 @@ union YYSTYPE
 
   ClassEntry*        classEntry;
   Type*              typeVal;
-  vector<Type*>*     typeList; 
+  vector<Type*>*     typeList;
 
-  EventEntry*        eventEntry;                        
+  EventEntry*        eventEntry;
   VariableEntry*     variableEntry;
   FunctionEntry*     functionEntry;
 
@@ -148,7 +148,7 @@ union YYSTYPE
   RuleNode*          ruleNode;
 
   vector<RuleNode*>* transList;
-  
+
   vector<Type*>*     formalTypeVal;
   const OpNode::OpInfo*    funIval;
 

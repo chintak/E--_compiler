@@ -92,7 +92,7 @@ extern const OpNode::OpInfo opInfo[];
 %type <stmtList> stmt_plus
 %type <stmtVal> stmt simple_stmt asg_stmt
 %type <compoundStmtVal> compoundStmt fun_rest
-%type <ifVal>  if_then_else_stmt
+%type <ifVal>  if_then_else_stmt if_cond
 
 %type <paramList> event_formal_params
 /*********************   Precedence and Associativity    ********************/
@@ -556,12 +556,25 @@ expr: literal {
 }
 ;
 
-if_then_else_stmt: TOK_IF expr stmt {
-    $$ = new IfNode($2, $3, NULL, yylinenum, 0, yyfilename);
+if_then_else_stmt: if_cond stmt {
+    if ($1) {
+        $$ = new IfNode($1->cond(), $2, NULL, $1->line(), 0, $1->file());
+        delete $1;
+    }
 }
-| TOK_IF expr stmt TOK_ELSE stmt {
-    $$ = new IfNode($2, $3, $5, yylinenum, 0, yyfilename);
+| if_cond stmt TOK_ELSE stmt {
+    if ($1) {
+        $$ = new IfNode($1->cond(), $2, $4, $1->line(), 0, $1->file());
+        delete $1;
+    }
+    // $$ = new IfNode($2, $3, $5, yylinenum, 0, yyfilename);
 }
+;
+
+if_cond: TOK_IF expr {
+    $$ = new IfNode($2, NULL, NULL, yylinenum, 0, yyfilename);
+}
+;
 
 asg_stmt: assignment TOK_SEMICOLON {
     $$ = new ExprStmtNode($1, yylinenum, 0, yyfilename);
@@ -660,8 +673,8 @@ rule: event_pattern TOK_ARROW stmt rule_end {
             GlobalEntry *ge = (GlobalEntry*)stm.currentScope(SymTabEntry::Kind::GLOBAL_KIND);
             ge->addRule($$);
         }
-        stm.leaveScope();
     }
+    stm.leaveToScope(SymTabEntry::Kind::GLOBAL_KIND);
 }
 ;
 
@@ -674,8 +687,8 @@ event_pattern: primitive_pat {
 }
 | TOK_NOT event_pattern %prec TOK_PAT_NOT {
     if ($2) {
-        if ($2->kind() != BasePatNode::PatNodeKind::PRIMITIVE)
-            errMsg("Only simple patterns without `.', `*', and `!' operators can be negated");
+        /*if ($2->kind() != BasePatNode::PatNodeKind::PRIMITIVE)
+            errMsg("Only simple patterns without `.', `*', and `!' operators can be negated");*/
         $$ = new PatNode(BasePatNode::PatNodeKind::NEG, $2, NULL,
             yylinenum, 0, yyfilename);
     } else {
@@ -756,6 +769,14 @@ event: TOK_ANY {
         if (eeType->argTypes() && $3) {
             if (eeType->argTypes()->size() < $3->size())
                 errMsg($1 + string(": mismatch in the number of arguments"));
+            unsigned int nargs = eeType->argTypes()->size();
+            if ($3->size() > nargs)
+                $3->erase($3->begin() + nargs, $3->end());
+            nargs = $3->size() < nargs ? $3->size() : nargs;
+            vector<Type*>* argTys = eeType->argTypes();
+            for (unsigned int i = 0; i < nargs; i++) {
+                $3->at(i)->type(argTys->at(i));
+            }
         }
         $$ = new PrimitivePatNode((EventEntry*)ste, $3, NULL,
             yylinenum, 0, yyfilename);
