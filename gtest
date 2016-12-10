@@ -2,7 +2,7 @@ int x, y;
 
 int g(int a, int b)
 {
-	return 110;
+	return 111;
 }
 
 
