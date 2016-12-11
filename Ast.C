@@ -695,7 +695,6 @@ const Type* InvocationNode::typeCheck() {
 
   }
   return NULL;
-
 }
 
 const Type* PrimitivePatNode::typeCheck() {
@@ -730,7 +729,7 @@ const Type* PrimitivePatNode::typeCheck() {
                 if (!Type::isSubType((*it_a)->type()->tag(), (*it)->tag()))
                     errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string(" Received: ") + string((*it_a)->type()->name()), line(), 0, file().c_str());
                   err = true;
-            } 
+            }
         }
     }
 
