@@ -616,20 +616,46 @@ OpNode::typePrint(ostream& os, int indent) const {
 const Type* OpNode::typeCheck() {
 	Type::TypeTag lType, rType, actLType, actRType;
 	int iopcode = int(opCode_);
+	cout << "OpNode::typeCheck" << endl;
 	if (arity_ == 2) {
 		lType = arg_[0]->type()->tag();
 		rType = arg_[1]->type()->tag();
 		actLType = opInfo[iopcode].argType_[0];
 		actRType = opInfo[iopcode].argType_[1];
+		/* Check if first operand has a valid type for this operator */
 		if (arg_[0] && Type::isSubType(lType, actLType)) {
-			if (lType != actLType) {
-				coercedType(new Type(actLType));
-			}
+			/* Check if second operand has a valid type for this operator */
 			if (arg_[1] && Type::isSubType(rType, actRType)) {
-				if (rType != actRType) {
-					coercedType(new Type(actRType));
+				/* type checking for assignment operator */
+				cout << opInfo[iopcode].name_<<endl;
+				if (opCode_ == OpNode::OpCode::ASSIGN) {
+					cout << "Inside assign block"<<endl;
+					if (lType == rType) {
+						return (new Type(Type::BOOL));
+					}
+					else if (Type::isSubType(rType, lType)) {
+						/* For assignment operator, rhs should be subtype of lhs. rhs type is coerced to lhs' type */
+						arg_[1]->coercedType(new Type(lType));
+						return (new Type(Type::BOOL));
+					}
+					else {
+						errMsg(string("Assignment between incompatible types"));
+					}
 				}
-				return (new Type(opInfo[iopcode].outType_));
+				/* type checking for other operators */				
+				else {
+					if (lType == rType) {
+						return (new Type(lType));
+					}
+					else if (Type::isSubType(lType, rType)) {
+						arg_[0]->coercedType(new Type(rType));
+						return (new Type(rType));
+					}
+					else {
+						arg_[1]->coercedType(new Type(lType));
+						return (new Type(lType));
+					}
+				}
 			}
 			else {
 				errMsg(string("Incompatible type for argument 2 for operator ") + opInfo[iopcode].name_);
@@ -643,24 +669,20 @@ const Type* OpNode::typeCheck() {
 
 		lType = arg_[0]->type()->tag();
 		actLType = opInfo[iopcode].argType_[0];
-		cout << lType << "\t" << actLType << endl;
 		if (arg_[0] && Type::isSubType(lType, actLType)) {
-			if (lType != actLType) {
-				coercedType(new Type(actLType));
-			}
-			return (new Type(opInfo[iopcode].outType_));
+			return (new Type(lType));
 		}
 		else {
 			errMsg(string("Incompatible type for argument for operator ") +  opInfo[iopcode].name_);
 		}
 	}
-	if (arity_ == OpNode::VARIABLE) {
-		for (unsigned int i=0; i<arity_; i++) {
-			if (!(arg_[i] && Type::isSubType(arg_[i]->type()->tag(), opInfo[iopcode].argType_[0]))) {
-				errMsg(string("Incompatible type for argument") + to_string(i) + string("for operator ") + opInfo[iopcode].name_);
-			}
-		}
-		return (new Type(opInfo[iopcode].outType_));
-	}
+	// if (arity_ == OpNode::VARIABLE) {
+	// 	for (unsigned int i=0; i<arity_; i++) {
+	// 		if (!(arg_[i] && Type::isSubType(arg_[i]->type()->tag(), opInfo[iopcode].argType_[0]))) {
+	// 			errMsg(string("Incompatible type for argument") + to_string(i) + string("for operator ") + opInfo[iopcode].name_);
+	// 		}
+	// 	}
+	// 	return (new Type(opInfo[iopcode].outType_));
+	// }
 	return (new Type(Type::TypeTag::ERROR));
 }
