@@ -1,0 +1,20 @@
+int x, y;
+
+event open (string a1 , int a2 , unsigned int a3);
+    string file ;
+    int flags;
+    unsigned int mode;
+
+ open(file, flags, mode) -> {
+ 		x = 6;
+		y = 10; 
+    };
+   
+open(file,flags,mode)**: !(any**) :
+(open(file,flags,mode1)|(state_var = get(file))) -> {
+	;
+};
+
+any -> {
+	x = 5; 
+}

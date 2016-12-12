@@ -1,9 +1,9 @@
-#include "Ast.h"					
-#include "ParserUtil.h"					
+#include "Ast.h"          
+#include "ParserUtil.h"         
 
 AstNode::AstNode(NodeType nt, int line, int column, string file):
   ProgramElem(NULL, line, column, file) {
-	  nodeType_ = nt;
+    nodeType_ = nt;
 }
 
 AstNode::AstNode(const AstNode& ast): ProgramElem(ast) {
@@ -12,12 +12,12 @@ AstNode::AstNode(const AstNode& ast): ProgramElem(ast) {
 /****************************************************************/
 
 ExprNode::ExprNode(ExprNodeType et, const Value* val, int line, int column, 
-				   string file):
-	AstNode(AstNode::NodeType::EXPR_NODE, line, column, file)
+           string file):
+  AstNode(AstNode::NodeType::EXPR_NODE, line, column, file)
 {
-	exprType_ = et;
-	val_ = val;
-	/* coercedType_ */
+  exprType_ = et;
+  val_ = val;
+  /* coercedType_ */
 }
 
 
@@ -26,12 +26,12 @@ ExprNode::ExprNode(const ExprNode& e) : AstNode(e)
 }
 
 RefExprNode::RefExprNode(string ext, const SymTabEntry* ste,
-		int line, int column, string file):
-	ExprNode(ExprNode::ExprNodeType::REF_EXPR_NODE, NULL, line, column, file)
+    int line, int column, string file):
+  ExprNode(ExprNode::ExprNodeType::REF_EXPR_NODE, NULL, line, column, file)
 {
-	ext_ = ext;
-	sym_ = ste;
-	type((Type *)ste->type());
+  ext_ = ext;
+  sym_ = ste;
+  type((Type *)ste->type());
 }
 
 RefExprNode::RefExprNode(const RefExprNode& r): ExprNode(r)
@@ -40,128 +40,128 @@ RefExprNode::RefExprNode(const RefExprNode& r): ExprNode(r)
 
 void RefExprNode::print(ostream& os, int indent) const
 {
-	os << ext_;
+  os << ext_;
 }
 
 
 void RefExprNode::typePrint(ostream& os, int indent) const
 {
-	type()->print(os, indent);
+  type()->print(os, indent);
 }
 
 IfNode::IfNode(ExprNode* cond, StmtNode* thenStmt,
-		StmtNode* elseStmt, int line, int column, string file):
-	StmtNode(StmtNode::StmtNodeKind::IF, line, column, file)
+    StmtNode* elseStmt, int line, int column, string file):
+  StmtNode(StmtNode::StmtNodeKind::IF, line, column, file)
 {
-	cond_ = cond;
-	then_ = thenStmt;
-	else_ = elseStmt;
+  cond_ = cond;
+  then_ = thenStmt;
+  else_ = elseStmt;
 }
 
 void IfNode::print(ostream& os, int indent) const
 {
-	os << "if";
-	os << " (";
-	cond_->print(os, indent);
-	os << ") ";
+  os << "if";
+  os << " (";
+  cond_->print(os, indent);
+  os << ") ";
 
-	if (then_) {
-		if (then_->stmtNodeKind() == StmtNode::StmtNodeKind::IF) {
-			then_->print(os, indent);
-			endln(os, indent);
-		} else {
-			then_->print(os, indent);
-			if (then_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
-				endln(os, indent);
-		}
-	}
-	if (else_) {
-		os << "else ";
-		else_->print(os, indent);
-		if (else_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
-			endln(os, indent);
-	}
+  if (then_) {
+    if (then_->stmtNodeKind() == StmtNode::StmtNodeKind::IF) {
+      then_->print(os, indent);
+      endln(os, indent);
+    } else {
+      then_->print(os, indent);
+      if (then_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+        endln(os, indent);
+    }
+  }
+  if (else_) {
+    os << "else ";
+    else_->print(os, indent);
+    if (else_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+      endln(os, indent);
+  }
 }
 
 void IfNode::typePrint(ostream& os, int indent) const
 {
-	os << "if";
-	os << " (";
-	cond_->typePrint(os, indent);
-	os << ") ";
+  os << "if";
+  os << " (";
+  cond_->typePrint(os, indent);
+  os << ") ";
 
-	if (then_) {
-		if (then_->stmtNodeKind() == StmtNode::StmtNodeKind::IF) {
-			then_->typePrint(os, indent);
-			endln(os, indent);
-		} else {
-			then_->typePrint(os, indent);
-			if (then_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
-				endln(os, indent);
-		}
-	}
-	if (else_) {
-		os << "else ";
-		else_->typePrint(os, indent);
-		if (else_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
-			endln(os, indent);
-	}
+  if (then_) {
+    if (then_->stmtNodeKind() == StmtNode::StmtNodeKind::IF) {
+      then_->typePrint(os, indent);
+      endln(os, indent);
+    } else {
+      then_->typePrint(os, indent);
+      if (then_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+        endln(os, indent);
+    }
+  }
+  if (else_) {
+    os << "else ";
+    else_->typePrint(os, indent);
+    if (else_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+      endln(os, indent);
+  }
 }
 
 void ValueNode::print(ostream& os, int indent) const
 {
-	value()->print(os, indent);
+  value()->print(os, indent);
 }
 
 void ValueNode::typePrint(ostream& os, int indent) const
 {
-	if (coercedType()) {
-		os << "(";
-		coercedType()->print(os, indent);
-		os << ")";  
-	}
-	value()->type()->print(os, indent);
+  if (coercedType()) {
+    os << "(";
+    coercedType()->print(os, indent);
+    os << ")";  
+  }
+  value()->type()->print(os, indent);
 }
 
 InvocationNode::InvocationNode(const SymTabEntry *ste, vector<ExprNode*>* param,
-		int line, int column, string file):
-	ExprNode(ExprNode::ExprNodeType::INV_NODE, NULL, line, column, file) {
-	params_ = param;
-	ste_ = ste;
+    int line, int column, string file):
+  ExprNode(ExprNode::ExprNodeType::INV_NODE, NULL, line, column, file) {
+  params_ = param;
+  ste_ = ste;
 }
 
 void InvocationNode::print(ostream& os, int indent) const
 {
-	bool multiParams = false;
-	os << ste_->name() << "(";
-	if (params_)
-		for (unsigned int i = 0; i < params_->size(); i++)
-		{
-			if (multiParams)
-				os << ", ";
-			if ((*params_)[i]) {
-				(*params_)[i]->print(os, indent);
-				multiParams = true;
-			}
-		}
-	os << ")";
+  bool multiParams = false;
+  os << ste_->name() << "(";
+  if (params_)
+    for (unsigned int i = 0; i < params_->size(); i++)
+    {
+      if (multiParams)
+        os << ", ";
+      if ((*params_)[i]) {
+        (*params_)[i]->print(os, indent);
+        multiParams = true;
+      }
+    }
+  os << ")";
 }
 
 void InvocationNode::typePrint(ostream& os, int indent) const
 {
-	bool multiParams = false;
-	os << ste_->name() << "(";
-	if (params_)
-		for (unsigned int i = 0; i < params_->size(); i++)
-		{
-			if (multiParams)
-				os << ", ";
-			if ((*params_)[i]) {
-				(*params_)[i]->typePrint(os, indent);
-				multiParams = true;
-			}
-		}
-	os << ")";
+  bool multiParams = false;
+  os << ste_->name() << "(";
+  if (params_)
+    for (unsigned int i = 0; i < params_->size(); i++)
+    {
+      if (multiParams)
+        os << ", ";
+      if ((*params_)[i]) {
+        (*params_)[i]->typePrint(os, indent);
+        multiParams = true;
+      }
+    }
+  os << ")";
 }
 
 InvocationNode::InvocationNode(const InvocationNode& i): ExprNode(i)
@@ -169,223 +169,231 @@ InvocationNode::InvocationNode(const InvocationNode& i): ExprNode(i)
 }
 
 PrimitivePatNode::PrimitivePatNode(EventEntry* ee, vector<VariableEntry*>* params,
-	ExprNode* c, int line, int column, string file):
-	BasePatNode(BasePatNode::PatNodeKind::PRIMITIVE, line, column, file)
+  ExprNode* c, int line, int column, string file):
+  BasePatNode(BasePatNode::PatNodeKind::PRIMITIVE, line, column, file)
 {
-	ee_ = ee;
-	params_ = params;
-	cond_ = c;
+  ee_ = ee;
+  params_ = params;
+  cond_ = c;
 }
 
 void PrimitivePatNode::print(ostream& os, int indent) const
 {
-	bool multiParams = false;
-	vector<Type*> *argTypes;
+  bool multiParams = false;
+  vector<Type*> *argTypes;
 
-	if (ee_ && ee_->type())
-		argTypes = ee_->type()->argTypes();
+  if (ee_ && ee_->type())
+    argTypes = ee_->type()->argTypes();
 
-	if (argTypes && params_) {
-		for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
-			(*params_)[i]->type((*argTypes)[i]);
-		}
-	}
-	prtSpace(os, indent);
-	os << "(";
-	os << ee_->name();
-	if (ee_->name() != "any") {
-		os << "(";
-		if (argTypes && params_) {
-			for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
-				if (multiParams)
-					os << ", ";
-				(*params_)[i]->print(os, indent);
-				multiParams = true;
-			}
-		}
-		os << ")";
-	}
-	if (cond_) {
-		os << "|";
-		cond_->print(os, indent);
-	}
-	os << ")";
+  if (argTypes && params_) {
+    for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
+      (*params_)[i]->type((*argTypes)[i]);
+    }
+  }
+  prtSpace(os, indent);
+  os << "(";
+  os << ee_->name();
+  if (ee_->name() != "any") {
+    os << "(";
+    if (argTypes && params_) {
+      for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
+        if (multiParams)
+          os << ", ";
+        (*params_)[i]->print(os, indent);
+        multiParams = true;
+      }
+    }
+    os << ")";
+  }
+  if (cond_) {
+    os << "|";
+    cond_->print(os, indent);
+  }
+  os << ")";
 }
 
 void PrimitivePatNode::typePrint(ostream& os, int indent) const
 {
-	bool multiParams = false;
-	vector<Type*> *argTypes;
+  bool multiParams = false;
+  vector<Type*> *argTypes;
 
-	if (ee_ && ee_->type())
-		argTypes = ee_->type()->argTypes();
+  if (ee_ && ee_->type())
+    argTypes = ee_->type()->argTypes();
 
-	if (argTypes && params_) {
-		for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
-			(*params_)[i]->type((*argTypes)[i]);
-		}
-	}
-	prtSpace(os, indent);
-	os << "(";
-	os << ee_->name();
-	if (ee_->name() != "any") {
-		os << "(";
-		if (argTypes && params_) {
-			for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
-				if (multiParams)
-					os << ", ";
-				(*params_)[i]->typePrint(os, indent);
-				multiParams = true;
-			}
-		}
-		os << ")";
-	}
-	if (cond_) {
-		os << "|";
-		cond_->typePrint(os, indent);
-	}
-	os << ")";
+  if (argTypes && params_) {
+    for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
+      (*params_)[i]->type((*argTypes)[i]);
+    }
+  }
+  prtSpace(os, indent);
+  os << "(";
+  os << ee_->name();
+  if (ee_->name() != "any") {
+    os << "(";
+    if (argTypes && params_) {
+      for (unsigned int i = 0; i < argTypes->size() && (*params_)[i]; i++) {
+        if (multiParams)
+          os << ", ";
+        (*params_)[i]->typePrint(os, indent);
+        multiParams = true;
+      }
+    }
+    os << ")";
+  }
+  if (cond_) {
+    os << "|";
+    cond_->typePrint(os, indent);
+  }
+  os << ")";
 }
 
 
 bool PrimitivePatNode::hasSeqOps() const
 {
-	return kind() == PatNodeKind::SEQ;
+  return kind() == PatNodeKind::SEQ;
 }
 
 bool PrimitivePatNode::hasNeg() const
 {
-	return kind() == PatNodeKind::NEG;
+  return kind() == PatNodeKind::NEG;
 }
 
 bool PrimitivePatNode::hasAnyOrOther() const
 {
-	return kind() == PatNodeKind::PRIMITIVE || kind() == PatNodeKind::OR;
+  return kind() == PatNodeKind::PRIMITIVE || kind() == PatNodeKind::OR;
 }
 
 PatNode::PatNode(PatNodeKind pk, BasePatNode *p1, BasePatNode*p2, int line,
-	int column, string file): BasePatNode(pk, line, column, file)
+  int column, string file): BasePatNode(pk, line, column, file)
 {
-	pat1_ = p1;
-	pat2_ = p2;
+  pat1_ = p1;
+  pat2_ = p2;
 
 }
 
 void PatNode::print(ostream& os, int indent) const
 {
-	PatNodeKind patKind = kind();
+  PatNodeKind patKind = kind();
 
-	os << "(";
-	if (patKind == PatNodeKind::NEG) {
-		os << "!";
-	}
-	pat1_->print(os, indent);
-	if (patKind == PatNodeKind::STAR)
-		os << "**";
-	if (pat2_) {
-		if (patKind == PatNodeKind::SEQ)
-			os << ":";
-		else if (patKind == PatNodeKind::OR)
-			os << "\\/";
-		pat2_->print(os, indent);
-	}
-	os << ")";
+  os << "(";
+  if (patKind == PatNodeKind::NEG) {
+    os << "!";
+  }
+  pat1_->print(os, indent);
+  if (patKind == PatNodeKind::STAR)
+    os << "**";
+  if (pat2_) {
+    if (patKind == PatNodeKind::SEQ)
+      os << ":";
+    else if (patKind == PatNodeKind::OR)
+      os << "\\/";
+    pat2_->print(os, indent);
+  }
+  os << ")";
 }
 
 void PatNode::typePrint(ostream& os, int indent) const
 {
-	PatNodeKind patKind = kind();
+  PatNodeKind patKind = kind();
 
-	os << "(";
-	if (patKind == PatNodeKind::NEG) {
-		os << "!";
-	}
-	pat1_->typePrint(os, indent);
-	if (patKind == PatNodeKind::STAR)
-		os << "**";
-	if (pat2_) {
-		if (patKind == PatNodeKind::SEQ)
-			os << ":";
-		else if (patKind == PatNodeKind::OR)
-			os << "\\/";
-		pat2_->typePrint(os, indent);
-	}
-	os << ")";
+  os << "(";
+  if (patKind == PatNodeKind::NEG) {
+    os << "!";
+  }
+  pat1_->typePrint(os, indent);
+  if (patKind == PatNodeKind::STAR)
+    os << "**";
+  if (pat2_) {
+    if (patKind == PatNodeKind::SEQ)
+      os << ":";
+    else if (patKind == PatNodeKind::OR)
+      os << "\\/";
+    pat2_->typePrint(os, indent);
+  }
+  os << ")";
 }
 
 bool PatNode::hasSeqOps() const
 {
-	return kind() == PatNodeKind::SEQ;
+    if (pat2() != NULL)
+    {
+        return kind() == PatNodeKind::SEQ || pat1()->hasSeqOps() || pat2()->hasSeqOps();
+    }
+    return kind() == PatNodeKind::SEQ || pat1()->hasSeqOps();
 }
 
 bool PatNode::hasNeg() const
 {
-	return kind() == PatNodeKind::NEG;
+    if (pat2() != NULL)
+    {
+        return kind() == PatNodeKind::NEG || pat1()->hasNeg() || pat2()->hasNeg();
+    }
+    return kind() == PatNodeKind::NEG || pat1()->hasNeg();
 }
 
 bool PatNode::hasAnyOrOther() const
 {
-	return kind() == PatNodeKind::PRIMITIVE || kind() == PatNodeKind::OR;
+  return kind() == PatNodeKind::PRIMITIVE || kind() == PatNodeKind::OR;
 }
 
 void CompoundStmtNode::print(ostream& os, int indent) const
 {
-	list <StmtNode*> *stmtList = stmts_;
-	bool first = true;
+  list <StmtNode*> *stmtList = stmts_;
+  bool first = true;
 
-	os << "{";
-	for (list<StmtNode*>::iterator it = stmtList->begin(); it != stmtList->end(); it++) {
-		ostringstream oss;
-		if (*it) {
-			(*it)->print(oss, indent);
-			if (oss.str().empty()) {
-				continue;
-			}
+  os << "{";
+  for (list<StmtNode*>::iterator it = stmtList->begin(); it != stmtList->end(); it++) {
+    ostringstream oss;
+    if (*it) {
+      (*it)->print(oss, indent);
+      if (oss.str().empty()) {
+        continue;
+      }
 
-			if (first) {
-				prtln(os, indent);
-				first = false;
-			}
-			(*it)->print(os, indent);
-			if ((*it)->stmtNodeKind() != StmtNode::StmtNodeKind::IF &&
-				(*it)->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
-			{
-				endln(os, indent);
-			}
-		}
-	}
-	os << "};";
-	prtln(os, indent);
+      if (first) {
+        prtln(os, indent);
+        first = false;
+      }
+      (*it)->print(os, indent);
+      if ((*it)->stmtNodeKind() != StmtNode::StmtNodeKind::IF &&
+        (*it)->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+      {
+        endln(os, indent);
+      }
+    }
+  }
+  os << "};";
+  prtln(os, indent);
 }
 
 void CompoundStmtNode::typePrint(ostream& os, int indent) const
 {
-	list <StmtNode*> *stmtList = stmts_;
-	bool first = true;
+  list <StmtNode*> *stmtList = stmts_;
+  bool first = true;
 
-	os << "{";
-	for (list<StmtNode*>::iterator it = stmtList->begin(); it != stmtList->end(); it++) {
-		ostringstream oss;
-		if (*it) {
-			(*it)->typePrint(oss, indent);
-			if (oss.str().empty()) {
-				continue;
-			}
+  os << "{";
+  for (list<StmtNode*>::iterator it = stmtList->begin(); it != stmtList->end(); it++) {
+    ostringstream oss;
+    if (*it) {
+      (*it)->typePrint(oss, indent);
+      if (oss.str().empty()) {
+        continue;
+      }
 
-			if (first) {
-				prtln(os, indent);
-				first = false;
-			}
-			(*it)->typePrint(os, indent);
-			if ((*it)->stmtNodeKind() != StmtNode::StmtNodeKind::IF &&
-				(*it)->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
-			{
-				endln(os, indent);
-			}
-		}
-	}
-	os << "};";
-	prtln(os, indent);
+      if (first) {
+        prtln(os, indent);
+        first = false;
+      }
+      (*it)->typePrint(os, indent);
+      if ((*it)->stmtNodeKind() != StmtNode::StmtNodeKind::IF &&
+        (*it)->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+      {
+        endln(os, indent);
+      }
+    }
+  }
+  os << "};";
+  prtln(os, indent);
 }
 
 
@@ -394,31 +402,31 @@ void CompoundStmtNode::printWithoutBraces(ostream& os, int indent) const
 }
 
 RuleNode::RuleNode(BlockEntry *re, BasePatNode* pat, StmtNode* reaction,
-		int line, int column, string file): AstNode(AstNode::NodeType::RULE_NODE, line, column, file)
+    int line, int column, string file): AstNode(AstNode::NodeType::RULE_NODE, line, column, file)
 {
-	rste_ = re;
-	pat_ = pat;
-	reaction_ = reaction;
+  rste_ = re;
+  pat_ = pat;
+  reaction_ = reaction;
 }
 
 void RuleNode::print(ostream& os, int indent) const
 {
-	prtSpace(os, STEP_INDENT);
-	pat_->print(os, indent);
-	os << "-->";
-	prtSpace(os, STEP_INDENT);
-	reaction_->print(os, indent + STEP_INDENT);
-	os << ";;\n";
+  prtSpace(os, STEP_INDENT);
+  pat_->print(os, indent);
+  os << "-->";
+  prtSpace(os, STEP_INDENT);
+  reaction_->print(os, indent + STEP_INDENT);
+  os << ";;\n";
 }
 
 void RuleNode::typePrint(ostream& os, int indent) const
 {
-	prtSpace(os, STEP_INDENT);
-	pat_->typePrint(os, indent);
-	os << "-->";
-	prtSpace(os, STEP_INDENT);
-	reaction_->typePrint(os, indent + STEP_INDENT);
-	os << ";;\n";
+  prtSpace(os, STEP_INDENT);
+  pat_->typePrint(os, indent);
+  os << "-->";
+  prtSpace(os, STEP_INDENT);
+  reaction_->typePrint(os, indent + STEP_INDENT);
+  os << ";;\n";
 
 }
 
@@ -512,16 +520,16 @@ extern const OpNode::OpInfo opInfo[] = {
 };
 
 OpNode::OpNode(OpCode op, ExprNode* a1, ExprNode* a2, 
-			   int ln, int col, string file):
+         int ln, int col, string file):
   ExprNode(ExprNode::ExprNodeType::OP_NODE, NULL, ln,col,file) {
   opCode_ = op;
   if (a1 != NULL) {
-	arity_ = 1;
-	arg_.push_back(a1);
-	if (a2 != NULL) {
-	  arity_++;
-	  arg_.push_back(a2);
-	}
+  arity_ = 1;
+  arg_.push_back(a1);
+  if (a2 != NULL) {
+    arity_++;
+    arg_.push_back(a2);
+  }
   }
 }
 
@@ -533,7 +541,7 @@ OpNode::OpNode(const OpNode &other):
     if (other.arg_[i]) {
       arg_.push_back((other.arg_[i])->clone());
     } 
-	else {
+  else {
       arg_.push_back(NULL);
     }
   }
@@ -541,143 +549,236 @@ OpNode::OpNode(const OpNode &other):
 
 void 
 OpNode::print(ostream& os, int indent) const {
-	int iopcode = static_cast<int>(opCode_);
+  int iopcode = static_cast<int>(opCode_);
   if (opInfo[iopcode].prtType_ == OpNode::OpPrintType::PREFIX) {
-	os << opInfo[iopcode].name_;
-	if (arity_ > 0) {
-	  if (opInfo[iopcode].needParen_) 
-		os << '(';
-	  for (unsigned i=0; i < arity_-1; i++) {
-		if (arg_[i])
-		  arg_[i]->print(os, indent);
-	    else os << "NULL";
-		os << ", ";
-	  }
+  os << opInfo[iopcode].name_;
+  if (arity_ > 0) {
+    if (opInfo[iopcode].needParen_) 
+    os << '(';
+    for (unsigned i=0; i < arity_-1; i++) {
+    if (arg_[i])
+      arg_[i]->print(os, indent);
+      else os << "NULL";
+    os << ", ";
+    }
       if (arg_[arity_-1])
-		arg_[arity_-1]->print(os, indent);
-	  else os << "NULL";
-	  if (opInfo[iopcode].needParen_) 
-		os << ") ";
-	}
+    arg_[arity_-1]->print(os, indent);
+    else os << "NULL";
+    if (opInfo[iopcode].needParen_) 
+    os << ") ";
+  }
   }
   else if ((opInfo[iopcode].prtType_ == OpNode::OpPrintType::INFIX) && (arity_ == 2)) {
-	if (opInfo[iopcode].needParen_) 
-	  os << "(";
-	if(arg_[0])
-	  arg_[0]->print(os, indent);
-	else os << "NULL";
-	os << opInfo[iopcode].name_; 
-	if(arg_[1])
-	  arg_[1]->print(os, indent);
-	else os << "NULL";
-	if (opInfo[iopcode].needParen_) 
-	  os << ")";
+  if (opInfo[iopcode].needParen_) 
+    os << "(";
+  if(arg_[0])
+    arg_[0]->print(os, indent);
+  else os << "NULL";
+  os << opInfo[iopcode].name_; 
+  if(arg_[1])
+    arg_[1]->print(os, indent);
+  else os << "NULL";
+  if (opInfo[iopcode].needParen_) 
+    os << ")";
   }
   else internalErr("Unhandled case in OpNode::print");
 }
 
 void 
 OpNode::typePrint(ostream& os, int indent) const {
-	int iopcode = static_cast<int>(opCode_);
+  int iopcode = static_cast<int>(opCode_);
   if (opInfo[iopcode].prtType_ == OpNode::OpPrintType::PREFIX) {
-	os << opInfo[iopcode].name_;
-	if (arity_ > 0) {
-	  if (opInfo[iopcode].needParen_) 
-		os << '(';
-	  for (unsigned i=0; i < arity_-1; i++) {
-		if (arg_[i])
-		  arg_[i]->typePrint(os, indent);
-	    else os << "NULL";
-		os << ", ";
-	  }
+  os << opInfo[iopcode].name_;
+  if (arity_ > 0) {
+    if (opInfo[iopcode].needParen_) 
+    os << '(';
+    for (unsigned i=0; i < arity_-1; i++) {
+    if (arg_[i])
+      arg_[i]->typePrint(os, indent);
+      else os << "NULL";
+    os << ", ";
+    }
       if (arg_[arity_-1])
-		arg_[arity_-1]->typePrint(os, indent);
-	  else os << "NULL";
-	  if (opInfo[iopcode].needParen_) 
-		os << ") ";
-	}
+    arg_[arity_-1]->typePrint(os, indent);
+    else os << "NULL";
+    if (opInfo[iopcode].needParen_) 
+    os << ") ";
+  }
   }
   else if ((opInfo[iopcode].prtType_ == OpNode::OpPrintType::INFIX) && (arity_ == 2)) {
-	if (opInfo[iopcode].needParen_) 
-	  os << "(";
-	if(arg_[0])
-	  arg_[0]->typePrint(os, indent);
-	else os << "NULL";
-	os << opInfo[iopcode].name_; 
-	if(arg_[1])
-	  arg_[1]->typePrint(os, indent);
-	else os << "NULL";
-	if (opInfo[iopcode].needParen_) 
-	  os << ")";
+  if (opInfo[iopcode].needParen_) 
+    os << "(";
+  if(arg_[0])
+    arg_[0]->typePrint(os, indent);
+  else os << "NULL";
+  os << opInfo[iopcode].name_; 
+  if(arg_[1])
+    arg_[1]->typePrint(os, indent);
+  else os << "NULL";
+  if (opInfo[iopcode].needParen_) 
+    os << ")";
   }
   else internalErr("Unhandled case in OpNode::print");
 }
 
 const Type* OpNode::typeCheck() {
-	Type::TypeTag lType, rType, actLType, actRType;
-	int iopcode = int(opCode_);
-	if (arity_ == 2) {
-		lType = arg_[0]->type()->tag();
-		rType = arg_[1]->type()->tag();
-		actLType = opInfo[iopcode].argType_[0];
-		actRType = opInfo[iopcode].argType_[1];
-		if (arg_[0] && Type::isSubType(lType, actLType)) {
-			if (lType != actLType) {
-				coercedType(new Type(actLType));
-			}
-			if (arg_[1] && Type::isSubType(rType, actRType)) {
-				if (rType != actRType) {
-					coercedType(new Type(actRType));
-				}
-				return (new Type(opInfo[iopcode].outType_));
-			}
-			else {
-				errMsg(string("Incompatible type for argument 2 for operator ") + opInfo[iopcode].name_);
-			}
-		}
-		else {
-			errMsg(string("Incompatible type for argument 1 for operator ") +  opInfo[iopcode].name_);
-		}
-	}
-	if (arity_ == 1) {
+  Type::TypeTag lType, rType, actLType, actRType;
+  int iopcode = int(opCode_);
+  if (arity_ == 2) {
+    lType = arg_[0]->type()->tag();
+    rType = arg_[1]->type()->tag();
+    actLType = opInfo[iopcode].argType_[0];
+    actRType = opInfo[iopcode].argType_[1];
+    if (arg_[0] && Type::isSubType(lType, actLType)) {
+      if (lType != actLType) {
+        coercedType(new Type(actLType));
+      }
+      if (arg_[1] && Type::isSubType(rType, actRType)) {
+        if (rType != actRType) {
+          coercedType(new Type(actRType));
+        }
+        return (new Type(opInfo[iopcode].outType_));
+      }
+      else {
+        errMsg(string("Incompatible type for argument 2 for operator ") + opInfo[iopcode].name_);
+      }
+    }
+    else {
+      errMsg(string("Incompatible type for argument 1 for operator ") +  opInfo[iopcode].name_);
+    }
+  }
+  if (arity_ == 1) {
 
-		lType = arg_[0]->type()->tag();
-		actLType = opInfo[iopcode].argType_[0];
-		cout << lType << "\t" << actLType << endl;
-		if (arg_[0] && Type::isSubType(lType, actLType)) {
-			if (lType != actLType) {
-				coercedType(new Type(actLType));
-			}
-			return (new Type(opInfo[iopcode].outType_));
-		}
-		else {
-			errMsg(string("Incompatible type for argument for operator ") +  opInfo[iopcode].name_);
-		}
-	}
-	if (arity_ == OpNode::VARIABLE) {
-		for (unsigned int i=0; i<arity_; i++) {
-			if (!(arg_[i] && Type::isSubType(arg_[i]->type()->tag(), opInfo[iopcode].argType_[0]))) {
-				errMsg(string("Incompatible type for argument") + to_string(i) + string("for operator ") + opInfo[iopcode].name_);
-			}
-		}
-		return (new Type(opInfo[iopcode].outType_));
-	}
-	return (new Type(Type::TypeTag::ERROR));
+    lType = arg_[0]->type()->tag();
+    actLType = opInfo[iopcode].argType_[0];
+    cout << lType << "\t" << actLType << endl;
+    if (arg_[0] && Type::isSubType(lType, actLType)) {
+      if (lType != actLType) {
+        coercedType(new Type(actLType));
+      }
+      return (new Type(opInfo[iopcode].outType_));
+    }
+    else {
+      errMsg(string("Incompatible type for argument for operator ") +  opInfo[iopcode].name_);
+    }
+  }
+  if (arity_ == OpNode::VARIABLE) {
+    for (unsigned int i=0; i<arity_; i++) {
+      if (!(arg_[i] && Type::isSubType(arg_[i]->type()->tag(), opInfo[iopcode].argType_[0]))) {
+        errMsg(string("Incompatible type for argument") + to_string(i) + string("for operator ") + opInfo[iopcode].name_);
+      }
+    }
+    return (new Type(opInfo[iopcode].outType_));
+  }
+  return (new Type(Type::TypeTag::ERROR));
 }
 
 const Type* InvocationNode::typeCheck() {
-	std::cout << "in InvocationNode typecheck\n";
-	FunctionEntry *fe = (FunctionEntry*) symTabEntry();
-	vector<Type*>* argTypes = fe->type()->argTypes();
-	vector<Type*>::iterator it = argTypes->begin();
-	int i = 0;
-	for (it = argTypes->begin(); it != argTypes->end(); ++it)
-	{
-		if ((*it)->name() != param(i)->coercedType()->name())
-		{
-			errMsg(string("Incompatible Type for Argument #") + to_string(i) + string("Expected: ") + string((*it)->name()) + string("Received: ") + string(param(i)->coercedType()->name()));
-		}
-	}
-	return NULL;
+  std::cout << "in InvocationNode typecheck\n";
+  FunctionEntry *fe = (FunctionEntry*) symTabEntry();
+  vector<Type*>* argTypes = fe->type()->argTypes();
+  vector<Type*>::iterator it;
+  int i = 0;
+  if (argTypes->size() == this->params()->size())
+  {
+    for (it = argTypes->begin(); it != argTypes->end(); ++it)
+    {
+      if ((*it)->name() != param(i)->coercedType()->name())
+      {
+        errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string("Received: ") + string(param(i)->coercedType()->name()));
+      }
+    }
+  }
+  else
+  {
+    errMsg(string("Invalid number of Arguments : ") + string(" Expected: ") + to_string(argTypes->size()) + string("Received: ") + to_string(this->params()->size()));
 
+  }
+  return NULL;
+
+}
+
+const Type* PrimitivePatNode::typeCheck() {
+  
+    // std::cout << "in PrimitivePatNode typecheck\n";
+
+    EventEntry *ee = event(); 
+    vector<Type*>* argTypes = ee->type()->argTypes();
+
+    vector<VariableEntry*>* args = params();
+    vector<VariableEntry*>::iterator it_a;
+
+    vector<Type*>::iterator it;
+    int i = 0;
+    
+    if (args == NULL && argTypes == NULL)
+    {
+      return NULL;
+    }
+
+    if (argTypes->size() == args->size())
+    {
+
+        for (it = argTypes->begin(), it_a = args->begin(); it != argTypes->end(); ++it, ++it_a)
+        {
+            if ((*it)->tag() != (*it_a)->type()->tag())
+            {
+                if (!Type::isSubType((*it_a)->type()->tag(), (*it)->tag()))
+                    errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string("Received: ") + string((*it_a)->type()->name()));
+            }
+        }
+    }
+
+    else
+    {
+        errMsg(string("Invalid number of Arguments : ") + string(" Expected: ") + to_string(argTypes->size()) + string("Received: ") + to_string(args->size()));
+    }
+
+    list<OpNode*>* asign_stmts = &this->asgs();
+
+    for (list<OpNode*>::iterator itr = asign_stmts->begin(); itr != asign_stmts->end(); itr++) {
+        for (it_a = args->begin(); it_a != args->end(); ++it_a)
+        { 
+            RefExprNode *ren = (RefExprNode*) (*itr)->arg(0);
+            if (ren->ext() == (*it_a)->name())
+            {
+                errMsg(string("Assignment Statements only for Globals are allowed inside rule"));
+            }
+        }
+    }
+
+
+  return NULL;
+}
+
+const Type* PatNode::typeCheck() {
+
+    // std::cout << "in PatNode typecheck\n";
+
+    // if (kind() == PatNodeKind::NEG)
+    // {
+    //   cout << "this is ------ve!!\n";
+    // }
+
+    if (kind() == PatNodeKind::NEG && this->hasSeqOps())
+    {
+        errMsg(string("The pattern negation operation is permitted only on those patterns that don’t have any sequencing operators"));
+    }
+    if (pat1())
+    {
+      pat1()->typeCheck();
+    }
+    if (pat2())
+    {
+      pat2()->typeCheck();
+    }
+
+    return NULL;
+
+}
+
+const Type* RuleNode::typeCheck() {
+    // std::cout << "in RuleNode typecheck\n";
+    pat()->typeCheck();
+    return NULL;
 }
