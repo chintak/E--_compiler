@@ -250,7 +250,7 @@ void PrimitivePatNode::typePrint(ostream& os, int indent) const
 
 bool PrimitivePatNode::hasSeqOps() const
 {
-  return kind() == PatNodeKind::SEQ;
+  return kind() == PatNodeKind::SEQ || kind() == PatNodeKind::STAR;
 }
 
 bool PrimitivePatNode::hasNeg() const
@@ -319,14 +319,14 @@ bool PatNode::hasSeqOps() const
     {
         return kind() == PatNodeKind::SEQ || pat1()->hasSeqOps() || pat2()->hasSeqOps();
     }
-    return kind() == PatNodeKind::SEQ || pat1()->hasSeqOps();
+    return kind() == PatNodeKind::SEQ || kind() == PatNodeKind::STAR || pat1()->hasSeqOps();
 }
 
 bool PatNode::hasNeg() const
 {
     if (pat2() != NULL)
     {
-        return kind() == PatNodeKind::NEG || pat1()->hasNeg() || pat2()->hasNeg();
+        return pat1()->hasNeg() || pat2()->hasNeg();
     }
     return kind() == PatNodeKind::NEG || pat1()->hasNeg();
 }
@@ -685,13 +685,13 @@ const Type* InvocationNode::typeCheck() {
     {
       if ((*it)->name() != param(i)->coercedType()->name())
       {
-        errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string("Received: ") + string(param(i)->coercedType()->name()));
+        errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string(" Received: ") + string(param(i)->coercedType()->name()));
       }
     }
   }
   else
   {
-    errMsg(string("Invalid number of Arguments : ") + string(" Expected: ") + to_string(argTypes->size()) + string("Received: ") + to_string(this->params()->size()));
+    errMsg(string("Invalid number of Arguments : ") + string(" Expected: ") + to_string(argTypes->size()) + string(" Received: ") + to_string(this->params()->size()));
 
   }
   return NULL;
@@ -701,6 +701,8 @@ const Type* InvocationNode::typeCheck() {
 const Type* PrimitivePatNode::typeCheck() {
   
     // std::cout << "in PrimitivePatNode typecheck\n";
+  if (!type())
+    cout << "!!!!!!!!!!!!!!!!!!!!!type is null by default!!!\n";
 
     EventEntry *ee = event(); 
     vector<Type*>* argTypes = ee->type()->argTypes();
@@ -708,12 +710,14 @@ const Type* PrimitivePatNode::typeCheck() {
     vector<VariableEntry*>* args = params();
     vector<VariableEntry*>::iterator it_a;
 
+    bool err = false;
+
     vector<Type*>::iterator it;
     int i = 0;
     
     if (args == NULL && argTypes == NULL)
     {
-      return NULL;
+      return type();
     }
 
     if (argTypes->size() == args->size())
@@ -724,14 +728,16 @@ const Type* PrimitivePatNode::typeCheck() {
             if ((*it)->tag() != (*it_a)->type()->tag())
             {
                 if (!Type::isSubType((*it_a)->type()->tag(), (*it)->tag()))
-                    errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string("Received: ") + string((*it_a)->type()->name()));
-            }
+                    errMsg(string("Incompatible Type for Argument #") + to_string(i) + string(" Expected: ") + string((*it)->name()) + string(" Received: ") + string((*it_a)->type()->name()), line(), 0, file().c_str());
+                  err = true;
+            } 
         }
     }
 
     else
     {
-        errMsg(string("Invalid number of Arguments : ") + string(" Expected: ") + to_string(argTypes->size()) + string("Received: ") + to_string(args->size()));
+        errMsg(string("Invalid number of Arguments : ") + string(" Expected: ") + to_string(argTypes->size()) + string(" Received: ") + to_string(args->size()), line(), 0, file().c_str());
+        err = true;
     }
 
     list<OpNode*>* asign_stmts = &this->asgs();
@@ -742,38 +748,48 @@ const Type* PrimitivePatNode::typeCheck() {
             RefExprNode *ren = (RefExprNode*) (*itr)->arg(0);
             if (ren->ext() == (*it_a)->name())
             {
-                errMsg(string("Assignment Statements only for Globals are allowed inside rule"));
+                errMsg(string("Assignment Statements only for Globals are allowed inside rule"), line(), 0, file().c_str());
+                err = true;
             }
         }
     }
 
-
-  return NULL;
+  if (err)
+    return new Type(Type::ERROR);
+  return type();
 }
 
 const Type* PatNode::typeCheck() {
 
-    // std::cout << "in PatNode typecheck\n";
+  if (!type())
+    cout << "!!!!!!!!!!!!!!!!!!!!!type is null by default!!!\n";
 
-    // if (kind() == PatNodeKind::NEG)
-    // {
-    //   cout << "this is ------ve!!\n";
-    // }
+  bool err = false;
+  const Type *p1;
+  const Type *p2;
 
-    if (kind() == PatNodeKind::NEG && this->hasSeqOps())
-    {
-        errMsg(string("The pattern negation operation is permitted only on those patterns that don’t have any sequencing operators"));
-    }
-    if (pat1())
-    {
-      pat1()->typeCheck();
-    }
-    if (pat2())
-    {
-      pat2()->typeCheck();
-    }
+  if (kind() == PatNodeKind::NEG && this->hasSeqOps())
+  {
+      errMsg(string("The pattern negation operation is permitted only on those patterns that don’t have any sequencing operators"), line(), 0, file().c_str());
+  }
+  if (pat1())
+  {
+    p1 = pat1()->typeCheck();
+    if (p1 && p1->tag() == Type::ERROR)
+      err = true;
+  }
+  if (pat2())
+  {
+    p2 = pat2()->typeCheck();
+    if (p2 && p2->tag() == Type::ERROR)
+      err = true;
+  }
 
-    return NULL;
+  if (err)
+  {
+    return new Type(Type::ERROR);
+  }
+  return type();
 
 }
 
