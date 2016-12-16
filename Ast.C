@@ -848,7 +848,11 @@ OpNode::typeCheck() {
         if (!Type::isBool(lType)) err = true;
         break;
       case OpNode::OpCode::BITNOT:
-        if (!Type::isIntegral(lType)) err = true;
+        if (!Type::isIntegral(lType)) {
+          err = true;
+          errMsg(string("Incompatible type for argument 1 for operator `") +
+            opInfo[iopcode].name_ + string("`"), line(), 0, file().c_str());
+        }
         if (!Type::isUnsigned(lType))
           arg_[0]->coercedType(Type::type[Type::UINT]);
         return Type::type[Type::UINT];
