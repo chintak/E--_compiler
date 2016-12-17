@@ -10,6 +10,8 @@ extern int verbosity;
 extern int yylex();
 extern void yyerror(const char *s);
 int offSet;
+bool insideLoop = false;
+int whileNestingLevel = 0;
 extern const OpNode::OpInfo opInfo[];
 
 %}
@@ -40,6 +42,7 @@ extern const OpNode::OpInfo opInfo[];
   IfNode*            ifVal;
   CompoundStmtNode*  compoundStmtVal;
   RuleNode*          ruleNode;
+  WhileStmtNode*     whileVal;
 
   vector<RuleNode*>* transList;
 
@@ -78,7 +81,7 @@ extern const OpNode::OpInfo opInfo[];
 %type <primPatVal> event primitive_pat
 %type <typeVal> type baseType
 %type <exprList> expr_list expr_plus
-%type <exprVal> expr function_invocation assignment
+%type <exprVal> expr function_invocation assignment while_hdr
 %type <refexpVal> ref_expr
 %type <ruleNode> rule
 
@@ -91,10 +94,12 @@ extern const OpNode::OpInfo opInfo[];
 
 %type <stmtList> stmt_plus
 %type <stmtVal> stmt simple_stmt asg_stmt
-%type <compoundStmtVal> compoundStmt fun_rest
+%type <compoundStmtVal> compoundStmt fun_rest while_body
 %type <ifVal>  if_then_else_stmt if_cond
 
 %type <paramList> event_formal_params
+
+%type <whileVal> while_stmt
 /*********************   Precedence and Associativity    ********************/
 
 %nonassoc TOK_ASSIGN
@@ -627,6 +632,42 @@ simple_stmt: TOK_RETURN expr TOK_SEMICOLON {
 | function_invocation TOK_SEMICOLON {
     $$ = new ExprStmtNode($1, yylinenum, 0, yyfilename);
 }
+| TOK_BREAK TOK_UINTNUM TOK_SEMICOLON {
+    if (!insideLoop) {
+        errMsg("Break statement is valid only within a loop");
+        $$ = NULL;
+    }
+    else {
+        Value *val = new Value($2, Type::UINT);
+        if (val->ival() <= 0) {
+            errMsg("Break statement label must be a positive integer");
+            $$ = NULL;
+        }
+        else if (val->ival() > whileNestingLevel) {
+            errMsg("Break statement label must not be greater than current nesting level of loop ");
+            $$ = NULL;
+        }
+        else {
+            $$ = new BreakStmtNode(val, yylinenum, 0, yyfilename);
+        }
+    }
+}
+;
+while_hdr: TOK_WHILE expr {
+    $$ = $2;
+    insideLoop = true;
+    whileNestingLevel++;
+}
+;
+
+while_body: compoundStmt {
+    $$ = $1;
+}
+;
+
+while_stmt: while_hdr while_body {
+    $$ = new WhileStmtNode($1, $2, whileNestingLevel, yylinenum, 0, yyfilename);
+}
 ;
 
 stmt: simple_stmt {
@@ -637,6 +678,11 @@ stmt: simple_stmt {
 }
 | if_then_else_stmt {
     $$ = $1;
+}
+| while_stmt {
+    $$ = $1;
+    insideLoop = false;
+    whileNestingLevel--;
 }
 ;
 

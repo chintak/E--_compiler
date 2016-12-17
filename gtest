@@ -1,5 +1,17 @@
-int x, y;
+int x, y=2;
+bool condition;
 
 any -> {
-	x = 5; 
+	x = 5;
+	if (condition) {
+		while (condition) {
+			if (y==2) {
+				break 1;
+			}
+		}
+	}
+	while (x + y > 100) {
+		break 5;
+	}
+	break 1;
 }

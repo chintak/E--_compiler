@@ -404,7 +404,7 @@ class PatNode: public BasePatNode {
 
 class StmtNode: public AstNode {
  public:
-  enum class StmtNodeKind { ILLEGAL=-1, EXPR, IF, COMPOUND, RETURN};
+  enum class StmtNodeKind { ILLEGAL=-1, EXPR, IF, COMPOUND, RETURN, WHILE, BREAK};
  public:
   StmtNode(StmtNodeKind skm, int line=0, int column=0, string file=""):
     AstNode(AstNode::NodeType::STMT_NODE, line,column,file) { skind_ = skm; };
@@ -559,4 +559,48 @@ class RuleNode: public AstNode {
 };
 
 /****************************************************************/
+class WhileStmtNode: public StmtNode{
+ public:
+
+  WhileStmtNode(ExprNode* cond, StmtNode* body, int nesting, int line=0, int column=0, string file="");
+  ~WhileStmtNode(){};
+
+  const ExprNode* cond() const {return cond_;}
+  const StmtNode* body() const { return body_;};
+
+  ExprNode* cond() {return cond_;}
+  StmtNode* body() {return body_;};
+
+  void print(ostream& os, int indent) const;
+  void typePrint(ostream& os, int indent) const;
+  const Type* typeCheck();
+
+ private:
+  ExprNode *cond_;
+  StmtNode *body_;
+  int nestingLevel;
+  WhileStmtNode(const WhileStmtNode&);
+};
+
+/****************************************************************/
+class BreakStmtNode: public StmtNode {
+ public:
+  BreakStmtNode(Value *val, int line=0, int column=0, string file=""):
+    StmtNode(StmtNode::StmtNodeKind::BREAK,line,column,file) { val_ = val; };
+  ~BreakStmtNode() {};
+
+  void print(ostream& os, int indent) const {
+	os << "break ";
+	if(val_ != NULL) val_->print(os, indent); else os << "NULL";};
+
+  void typePrint(ostream& os, int indent) const {
+	os << "break ";
+	if(val_ != NULL) os << "UINT"; else os << "NULL";};
+
+  const Type* typeCheck() { return Type::type[Type::VOID]; }
+
+ private:
+  Value* val_;
+};
+
 #endif
