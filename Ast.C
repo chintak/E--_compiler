@@ -616,7 +616,6 @@ OpNode::typePrint(ostream& os, int indent) const {
 const Type* OpNode::typeCheck() {
 	Type::TypeTag lType, rType, actLType, actRType;
 	int iopcode = int(opCode_);
-	cout << "OpNode::typeCheck" << endl;
 	if (arity_ == 2) {
 		lType = arg_[0]->type()->tag();
 		rType = arg_[1]->type()->tag();
@@ -629,7 +628,6 @@ const Type* OpNode::typeCheck() {
 				/* type checking for assignment operator */
 				cout << opInfo[iopcode].name_<<endl;
 				if (opCode_ == OpNode::OpCode::ASSIGN) {
-					cout << "Inside assign block"<<endl;
 					if (lType == rType) {
 						return (new Type(Type::BOOL));
 					}
@@ -702,4 +700,59 @@ const Type* InvocationNode::typeCheck() {
 	}
 	return NULL;
 
+}
+
+WhileStmtNode::WhileStmtNode(ExprNode* cond, StmtNode* body, int nesting, int line, int column, string file):
+	StmtNode(StmtNode::StmtNodeKind::WHILE, line, column, file)
+{
+	cond_ = cond;
+	body_ = body;
+	nestingLevel = nesting;
+}
+
+void WhileStmtNode::print(ostream& os, int indent) const
+{
+	os << "while";
+	os << " (";
+	cond_->print(os, indent);
+	os << ") ";
+
+	if (body_) {
+		body_->print(os, indent);
+		if (body_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+			endln(os, indent);
+	}
+}
+
+void WhileStmtNode::typePrint(ostream& os, int indent) const
+{
+	os << "while";
+	os << " (";
+	cond_->typePrint(os, indent);
+	os << ") ";
+
+	if (body_) {
+		body_->typePrint(os, indent);
+		if (body_->stmtNodeKind() != StmtNode::StmtNodeKind::COMPOUND)
+				endln(os, indent);
+		}
+}
+
+const Type*
+WhileStmtNode::typeCheck() {
+  Type::TypeTag tag; 
+  if (cond_) {
+	  tag = cond_->typeCheck()->tag();
+	  if (tag != Type::BOOL && tag != Type::ERROR) {
+		  errMsg(string("Boolean expression required for condition in while"),
+		  	line(), 0, file().c_str());
+		  return Type::type[Type::ERROR];
+	  }
+  }
+  if (body_) {
+    tag = body_->typeCheck()->tag();
+    if (tag == Type::ERROR)
+      return Type::type[Type::ERROR];
+  }
+  return Type::type[Type::VOID];
 }
