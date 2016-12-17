@@ -5,6 +5,8 @@
 #include "Value.h"
 #include "ProgramElem.h"
 #include "SymTabEntry.h"
+#include "Register.h"
+#include "MemAlloc.h"
 
 class BlockEntry;
 class EFSA;
@@ -69,6 +71,7 @@ class AstNode: public ProgramElem {
   virtual void print(ostream& os, int indent=0) const=0;
   virtual void typePrint(ostream& os, int indent=0) const=0;
   virtual EFSA* codeGen() {return NULL;};
+  virtual void memAlloc() {};
 
   virtual void renameRV(string prefix) {}; // new names start with given prefix
   virtual bool operator==(const AstNode&) const { return false; };
@@ -136,13 +139,24 @@ class RefExprNode: public ExprNode {
   const SymTabEntry* symTabEntry() const { return sym_;};
   void symTabEntry(const SymTabEntry *ste)  { sym_ = ste;};
 
+  const Register* location() const {
+    if (!arg_) cout << "WARNING: returning NULL register\n";
+    return arg_;
+  }
+  Register* location() {
+    if (!arg_) cout << "WARNING: returning NULL register\n";
+    return (Register*) arg_;
+  }
+
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  void memAlloc();
 
  private:
   string ext_;
   const SymTabEntry* sym_;
+  const Register* arg_;
 };
 
 /****************************************************************/
@@ -197,6 +211,7 @@ class OpNode: public ExprNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  void memAlloc();
   Type* opTypeCheck(ExprNode* t1, ExprNode* t2, Type::TypeTag lFormType,
     Type::TypeTag rFormType, Type::TypeTag retTag, bool coerce);
 
@@ -204,6 +219,8 @@ class OpNode: public ExprNode {
   unsigned int arity_;
   OpCode   opCode_;
   vector<ExprNode*> arg_;
+  const Register* reg_;
+  const Register* coercedReg_;
 };
 
 /****************************************************************/
@@ -218,9 +235,13 @@ class ValueNode: public ExprNode {
   ExprNode* clone() const { return new ValueNode(*this); }
   ~ValueNode() {};
 
+  const Value* location() const { return value(); }
+  Value* location() { return (Value*) value(); }
+
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  void memAlloc() {}
 
  private:
   /* val_ field is already included in ExprNode, so no new data members */

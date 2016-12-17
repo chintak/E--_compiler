@@ -229,3 +229,49 @@ void BlockEntry::print(ostream& out, int indent) const
 {
 
 }
+
+/************** Mem Alloc *******************/
+
+void
+GlobalEntry::memAlloc() {
+  int staticAreaLoc = 0;
+  SymTab* st = symTab();
+  VariableEntry* ve;
+  SymTab::iterator it = NULL;
+
+  for (it = st->begin(); it != st->end(); ++it)  {
+    if ((*it)->kind() == SymTabEntry::Kind::VARIABLE_KIND) {
+      ve = (VariableEntry *)(*it);
+      if (ve->varKind() == VariableEntry::GLOBAL_VAR) {
+        ve->offSet(staticAreaLoc);
+        staticAreaLoc++;
+        if (ve->initVal()) ve->initVal()->memAlloc();
+      }
+    } else if ((*it)->kind() == SymTabEntry::Kind::FUNCTION_KIND) {
+      (*it)->memAlloc();
+    }
+  }
+}
+
+void
+FunctionEntry::memAlloc() {
+  int locVarOffset = 0;
+  int paramVarOffset = 1;
+  SymTab* st = symTab();
+  VariableEntry* ve;
+  SymTab::iterator it = NULL;
+
+  for (it = st->begin(); it != st->end(); ++it)  {
+    if ((*it)->kind() == SymTabEntry::Kind::VARIABLE_KIND) {
+      ve = (VariableEntry *)(*it);
+      if (ve->varKind() == VariableEntry::LOCAL_VAR) {
+        ve->offSet(locVarOffset);
+        locVarOffset--;
+        if (ve->initVal()) ve->initVal()->memAlloc();
+      } else if (ve->varKind() == VariableEntry::PARAM_VAR) {
+        ve->offSet(paramVarOffset);
+        paramVarOffset++;
+      }
+    }
+  }
+}

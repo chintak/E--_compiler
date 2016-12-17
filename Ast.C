@@ -796,7 +796,9 @@ OpNode::typeCheck() {
              rhs type is coerced to lhs' type */
           if (lType != rType)
             arg_[1]->coercedType(Type::type[lType]);
-          return Type::type[Type::BOOL];
+          res = (Type*) Type::type[Type::BOOL];
+          type((Type*) res);
+          return res;
         } else {
           errMsg(string("Assignment between incompatible types"),
             line(), 0, file().c_str());
@@ -855,7 +857,9 @@ OpNode::typeCheck() {
         }
         if (!Type::isUnsigned(lType))
           arg_[0]->coercedType(Type::type[Type::UINT]);
-        return Type::type[Type::UINT];
+        res = (Type*) Type::type[Type::UINT];
+        type((Type*) res);
+        return res;
       default:;
     }
     if (!err)
@@ -866,6 +870,7 @@ OpNode::typeCheck() {
       res = (Type*) Type::type[Type::ERROR];
     }
   }
+  type((Type*) res);
   return res;
 }
 
@@ -1007,4 +1012,31 @@ RuleNode::typeCheck() {
     return Type::type[Type::ERROR];
   else
     return Type::type[Type::VOID];
+}
+
+/************** Mem Alloc *******************/
+
+void
+RefExprNode::memAlloc() {
+  arg_ = MemAlloc::get_next_reg(type());
+}
+
+void
+OpNode::memAlloc() {
+  const Type* cT = coercedType();
+  const Type* t = type();
+
+  arg_[0]->memAlloc();
+  if (arity_ == 2)
+    arg_[1]->memAlloc();
+
+  // allocate register for result
+  if (t)
+    reg_ = MemAlloc::get_next_reg(t);
+  else
+    cout << "ERROR: return type of OpNode is not set\n";
+  if (cT)
+    coercedReg_ = MemAlloc::get_next_reg(cT);
+  // reg_->print(cout, 0);
+  cout << endl;
 }

@@ -4,6 +4,8 @@
 #include "SymTab.h"
 #include "SymTabEntry.h"
 #include "Ast.h"
+#include "MemAlloc.h"
+
 
 class StmtNode;
 class RuleNode;
@@ -34,6 +36,7 @@ class GlobalEntry: public SymTabEntry {
   void print(ostream&, int indent=0) const;
   void typePrint(ostream&, int indent=0) const;
   const Type* typeCheck();
+  void memAlloc();
 
  private:
   vector<RuleNode*> rules_;
@@ -90,6 +93,7 @@ class VariableEntry: public SymTabEntry {
  private:
   VarKind vkind_;
   int offSet_;
+  int base_;  // could be static area addr or base pointer addr
   ExprNode* initVal_;
 };
 
@@ -120,6 +124,7 @@ class FunctionEntry: public SymTabEntry {
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
+  void memAlloc();
 
  private:
   CompoundStmtNode* body_;

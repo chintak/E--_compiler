@@ -57,12 +57,12 @@ SymTab::printST(ostream& os, int indent, char leftdelim, char rightdelim,
   last = 1000000;
 
   for (i=0; (it != end()) && (i < last); i++, ++it)  {
-  SymTabEntry *ste = (SymTabEntry *)(*it);
-  if (i >= first) {
-    if ((ste->kind() != SymTabEntry::Kind::RULE_BLOCK_KIND) &&
-      (ste->kind() != SymTabEntry::Kind::EVENT_BLOCK_KIND) &&
-      (ste->name() != "any")) {
-    n_printed++;
+    SymTabEntry *ste = (SymTabEntry *)(*it);
+    if (i >= first) {
+      if ((ste->kind() != SymTabEntry::Kind::RULE_BLOCK_KIND) &&
+        (ste->kind() != SymTabEntry::Kind::EVENT_BLOCK_KIND) &&
+        (ste->name() != "any")) {
+        n_printed++;
     }
   }
   }

@@ -13,12 +13,12 @@ class SymTabEntry: public ProgramElem {
   enum class Kind {
     // If this enum is changed, kindTag() needs to be updated correspondingly
 	UNKNOWN_KIND,
-	GLOBAL_KIND, 
+	GLOBAL_KIND,
   CLASS_KIND, FUNCTION_KIND,
-	VARIABLE_KIND, 
+	VARIABLE_KIND,
 	EVENT_KIND,
-	RULE_KIND, 
-	BLOCK_KIND, RULE_BLOCK_KIND, EVENT_BLOCK_KIND, 
+	RULE_KIND,
+	BLOCK_KIND, RULE_BLOCK_KIND, EVENT_BLOCK_KIND,
 	ERROR_KIND
   };
 
@@ -41,7 +41,7 @@ class SymTabEntry: public ProgramElem {
   string name() const { return name_; }
   void name(string str) { name_=str; };
 
-  Kind kind() const { return kind_; } 
+  Kind kind() const { return kind_; }
   void kind(Kind kind) { kind_ = kind; };
 
   const SymTab* symTab() const { return st_; };
@@ -62,24 +62,25 @@ class SymTabEntry: public ProgramElem {
   }
 
   virtual bool operator==(const SymTabEntry&) const;
-  virtual bool operator!=(const SymTabEntry& ste) const 
+  virtual bool operator!=(const SymTabEntry& ste) const
   { return !operator==(ste); };
+  virtual void memAlloc() {};
 
   virtual void print(ostream& os, int indent=0) const {};
    virtual void typePrint(ostream& os, int indent=0) const {};
 virtual const Type *typeCheck() {return NULL;};
   virtual void printST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
 					   bool linebreaks=true, int first=0, int last=0) const {
-	  if (symTab() != nullptr) 
+	  if (symTab() != nullptr)
 		symTab()->printST(os, ind, ldelim, rdelim, linebreaks, first, last);
   }
   virtual void typePrintST(ostream& os,int ind=0,char ldelim='{',char rdelim='}',
 					   bool linebreaks=true, int first=0, int last=0) const {
-	  if (symTab() != nullptr) 
+	  if (symTab() != nullptr)
 		symTab()->typePrintST(os, ind, ldelim, rdelim, linebreaks, first, last);
   }
   virtual const Type *typeCheckST() {
-	  if (symTab() != nullptr) 
+	  if (symTab() != nullptr)
 		return symTab()->typeCheckST();
 	  return NULL;
   }
@@ -89,7 +90,7 @@ virtual const Type *typeCheck() {return NULL;};
   Kind kind_;
   SymTab* st_;
 
- private: 
+ private:
   // These two fields are used to link the STEs so that their order
   // of declaration can be maintained.
   SymTabEntry* next_;
@@ -99,7 +100,7 @@ virtual const Type *typeCheck() {return NULL;};
   const SymTabEntry& operator=(const SymTabEntry&); // Disable assignment
   SymTabEntry(const SymTabEntry&);                  // and copy constructor
 };
-	
+
 inline ostream& operator<<(ostream& out, const SymTabEntry* ste){
   ste->print(out, 0);
   return out;
