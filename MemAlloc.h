@@ -18,6 +18,9 @@ ROO1 SP
 
 using namespace std;
 
+const Register* BP();
+const Register* SP();
+
 class MemAlloc {
 public:
     MemAlloc() {}
@@ -35,6 +38,5 @@ private:
     static int fRegNum;
     static int globalOffset;
 };
-
 
 #endif

@@ -55,7 +55,7 @@ public:
 		INF
 	};
 	Instruction() {}
-	Instruction(Icode o, Arg* a1, Arg* a2=NULL, Arg* r=NULL, Label* l=NULL) :
+	Instruction(Icode o, const Arg* a1, const Arg* a2=NULL, const Arg* r=NULL, const Label* l=NULL) :
 		icode_(o), arg1_(a1), arg2_(a2), res_(r), lbl_(l) {}
 	~Instruction();
 	void print(ostream& os, int indent);
@@ -64,9 +64,9 @@ public:
 
 private:
 	Icode icode_;
-	Arg* arg1_;
-	Arg* arg2_;
-	Arg* res_;
-	Label* lbl_;
+	const Arg* arg1_;
+	const Arg* arg2_;
+	const Arg* res_;
+	const Label* lbl_;
 };
 #endif

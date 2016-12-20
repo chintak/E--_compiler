@@ -2,11 +2,17 @@
 
 void
 Instruction::print(ostream& os, int indent) {
-    if (lbl_) lbl_->print(os, 0);
-    os << ' ' << Instruction::icode[icode_] << ' ';
+    if (lbl_) { lbl_->print(os, 0); os << ' '; }
+    os << Instruction::icode[icode_] << ' ';
     arg1_->print(os, 0);
-    if (arg2_) arg2_->print(os, 0);
-    if (res_) res_->print(os, 0);
+    if (arg2_) {
+        os << ' ';
+        arg2_->print(os, 0);
+    }
+    if (res_) {
+        os << ' ';
+        res_->print(os, 0);
+    }
 }
 
 const string Instruction::icode[] = {

@@ -90,13 +90,18 @@ class VariableEntry: public SymTabEntry {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type *typeCheck();
+  void memAlloc();
   vector<Instruction*>* codeGen();
+
+  const Register* lVal() { return lVal_; }
+  void lVal(const Register* l) { lVal_ = l; }
 
  private:
   VarKind vkind_;
   int offSet_;
   int base_;  // could be static area addr or base pointer addr
   ExprNode* initVal_;
+  const Register* lVal_;
 };
 
 class ClassEntry: public SymTabEntry {

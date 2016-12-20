@@ -245,7 +245,7 @@ GlobalEntry::memAlloc() {
 			if (ve->varKind() == VariableEntry::GLOBAL_VAR) {
 				ve->offSet(staticAreaLoc);
 				staticAreaLoc++;
-				if (ve->initVal()) ve->initVal()->memAlloc();
+				if (ve->initVal()) ve->memAlloc();
 			}
 		} else if ((*it)->kind() == SymTabEntry::Kind::FUNCTION_KIND) {
 			(*it)->memAlloc();
@@ -254,7 +254,19 @@ GlobalEntry::memAlloc() {
 }
 
 void
+VariableEntry::memAlloc() {
+	if (initVal()) {
+		if (vkind_ == VariableEntry::LOCAL_VAR) {
+			lVal_ = MemAlloc::get_next_reg(type());
+			cout << "malloc: " << lVal_->name() << " to " << name() << endl;
+		}
+		initVal()->memAlloc();  // allocate regs for computing rhs
+	}
+}
+
+void
 FunctionEntry::memAlloc() {
+	// store local variables at an offset of BP-- & param vars at BP++
 	int locVarOffset = 0;
 	int paramVarOffset = 1;
 	SymTab* st = symTab();
@@ -267,7 +279,7 @@ FunctionEntry::memAlloc() {
 			if (ve->varKind() == VariableEntry::LOCAL_VAR) {
 				ve->offSet(locVarOffset);
 				locVarOffset--;
-				if (ve->initVal()) ve->initVal()->memAlloc();
+				if (ve->initVal()) ve->memAlloc();
 			} else if (ve->varKind() == VariableEntry::PARAM_VAR) {
 				ve->offSet(paramVarOffset);
 				paramVarOffset++;
@@ -280,65 +292,99 @@ FunctionEntry::memAlloc() {
 
 vector<Instruction*>*
 GlobalEntry::codeGen() {
-	cout << "ge codeGen" << endl;
 	SymTab* st = symTab();
 	VariableEntry* ve;
 	SymTab::iterator it = NULL;
+	vector<Instruction*>* ics = NULL, *instr_set = NULL;
 
 	for (it = st->begin(); it != st->end(); ++it)  {
 		if ((*it)->kind() == SymTabEntry::Kind::VARIABLE_KIND) {
 			ve = (VariableEntry *)(*it);
-			if (ve->varKind() == VariableEntry::GLOBAL_VAR)
-				ve->codeGen();
+			if (ve->varKind() == VariableEntry::GLOBAL_VAR) {
+				ics = ve->codeGen();
+				if (ics) {
+					if (instr_set)
+						instr_set->insert(instr_set->end(), ics->begin(), ics->end());
+					else instr_set = ics;
+				}
+			}
 		}
 	}
-	return NULL;
+	for (unsigned int i = 0; i < instr_set->size(); i++) {
+		(*instr_set)[i]->print(cout,0);
+		cout << "\n";
+	}
+	return instr_set;
 }
 
 vector<Instruction*>*
 VariableEntry::codeGen() {
 	// move the variable offset into a register
-	vector<Instruction*>* instr_set = new vector<Instruction*>();
-	if (this->initVal() == NULL)
-		return instr_set;
+	if (initVal() == NULL)
+		return NULL;
 
-	Register* r = NULL;
-	const Value* v = new Value(offSet_+base_, Type::UINT);
-	Constant* off = new Constant(v);
+	// do code gen for RHS
+	ExprNode* rhs = initVal();
+	vector<Instruction*>* instr_set = rhs->codeGen();
+	if (!instr_set) instr_set = new vector<Instruction*>;
+	const Register* r = rhs->rVal();
 
-	Instruction::Icode i_code1 = Instruction::Icode::MOVI;
-	Instruction::Icode i_code2 = Instruction::Icode::STI;
-	if (type()->tag() == Type::TypeTag::DOUBLE)
-	{
-		i_code1 = Instruction::Icode::MOVF;
-		i_code2 = Instruction::Icode::STF;
+	// do rval computation
+	if (vkind_ == VariableEntry::GLOBAL_VAR) {
+		const Value* o = new Value(offSet_, Type::UINT);
+		const Arg* l = new Constant(o);
+
+		// store the value
+		Instruction::Icode i_code = Instruction::Icode::STI;
+		i_code = ((type()->tag() == Type::TypeTag::DOUBLE) ?
+			Instruction::Icode::STF : i_code);
+		instr_set->push_back(new Instruction(i_code, r, NULL, l, NULL));
+	} else if (vkind_ == VariableEntry::LOCAL_VAR) {
+		// do lval computation
+		const Value* o = new Value(offSet_, Type::UINT);
+		const Arg* off = new Constant(o);
+		const Register* l = lVal();
+		instr_set->push_back(
+			new Instruction(Instruction::Icode::MOVI, off, NULL, l, NULL));
+		instr_set->push_back(
+			new Instruction(Instruction::Icode::ADD, BP(), l, l, NULL));
+
+		// store the value
+		Instruction::Icode i_code = Instruction::Icode::STI;
+		i_code = ((type()->tag() == Type::TypeTag::DOUBLE) ?
+			Instruction::Icode::STF : i_code);
+		instr_set->push_back(new Instruction(i_code, r, NULL, l, NULL));
 	}
-	if (i_code1 == Instruction::Icode::MOVI)
-		r  = MemAlloc::get_next_ireg();
-	else
-		r  = MemAlloc::get_next_ireg();
+	// Register* r = NULL;
 
-	instr_set->push_back(new Instruction(i_code1,new Constant(initVal()->value()),r)); // stores initval into a  reg.
-	if (varKind() != VariableEntry::VarKind::GLOBAL_VAR)
-	{
-		Register* r1 = MemAlloc::get_next_ireg();
-		instr_set->push_back(new Instruction(Instruction::Icode::MOVI, off, r1)); // move offset into r1
-		Register* r2 = MemAlloc::get_next_ireg();
-		if (varKind() == VariableEntry::VarKind::LOCAL_VAR)
-			instr_set->push_back(new Instruction(Instruction::Icode::ADD, r1, IReg::BP(), r2)); // store final offset in r2
-		else if (varKind() == VariableEntry::VarKind::PARAM_VAR)
-			instr_set->push_back(new Instruction(Instruction::Icode::ADD, r1, IReg::SP(), r2)); // store final offset in r2
 
-		instr_set->push_back(new Instruction(i_code2,r,r2)); // updates value stored in mem.	
-		
-	}
-	instr_set->push_back(new Instruction(i_code2,r,off)); // updates value stored in mem.
+	// Instruction::Icode i_code1 = Instruction::Icode::MOVI;
+	// Instruction::Icode i_code2 = Instruction::Icode::STI;
+	// if (type()->tag() == Type::TypeTag::DOUBLE)
+	// {
+	// 	i_code1 = Instruction::Icode::MOVF;
+	// 	i_code2 = Instruction::Icode::STF;
+	// }
+	// if (i_code1 == Instruction::Icode::MOVI)
+	// 	r  = MemAlloc::get_next_ireg();
+	// else
+	// 	r  = MemAlloc::get_next_freg();
 
-	for (unsigned int i = 0; i < instr_set->size(); i++)
-	{
-		(*instr_set)[i]->print(cout,0);
-		cout << "\n";
-	}
+	// instr_set->push_back(new Instruction(i_code1, new Constant(initVal()->value()), NULL, r, NULL)); // stores initval into a  reg.
+	// if (varKind() != VariableEntry::VarKind::GLOBAL_VAR)
+	// {
+	// 	Register* r1 = MemAlloc::get_next_ireg();
+	// 	instr_set->push_back(new Instruction(Instruction::Icode::MOVI, off, NULL, r1, NULL)); // move offset into r1
+	// 	Register* r2 = MemAlloc::get_next_ireg();
+	// 	if (varKind() == VariableEntry::VarKind::LOCAL_VAR)
+	// 		instr_set->push_back(new Instruction(Instruction::Icode::ADD, r1, IReg::BP(), r2, NULL)); // store final offset in r2
+	// 	else if (varKind() == VariableEntry::VarKind::PARAM_VAR)
+	// 		instr_set->push_back(new Instruction(Instruction::Icode::ADD, r1, IReg::SP(), r2, NULL)); // store final offset in r2
+
+	// 	instr_set->push_back(new Instruction(i_code2,r,r2)); // updates value stored in mem.
+
+	// }
+	// instr_set->push_back(new Instruction(i_code2,r,off)); // updates value stored in mem.
 
 	return instr_set;
 }

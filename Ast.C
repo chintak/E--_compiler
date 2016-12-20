@@ -1074,7 +1074,12 @@ WhileStmtNode::typeCheck() {
 
 void
 RefExprNode::memAlloc() {
-	arg_ = MemAlloc::get_next_reg(type());
+	rVal(MemAlloc::get_next_reg(type()));
+}
+
+void
+ValueNode::memAlloc() {
+	rVal(MemAlloc::get_next_reg(type()));
 }
 
 void
@@ -1087,11 +1092,63 @@ OpNode::memAlloc() {
 		arg_[1]->memAlloc();
 
 	// allocate register for result
-	if (t)
-		reg_ = MemAlloc::get_next_reg(t);
-	else
-		cout << "ERROR: return type of OpNode is not set\n";
-	if (cT)
-		coercedReg_ = MemAlloc::get_next_reg(cT);
-	// reg_->print(cout, 0);
+	if (cT && Type::isCoerce(t->tag(), cT->tag())) {
+		unCoercedVal(MemAlloc::get_next_reg(t));
+		rVal(MemAlloc::get_next_reg(cT));
+		// cout << "malloc: OP: " << rVal()->name() << endl;
+		// cout << "malloc: OP: " << unCoercedVal()->name() << endl;
+	} else {
+		unCoercedVal(MemAlloc::get_next_reg(t));
+		rVal(unCoercedVal());
+		// cout << "malloc: OP: " << unCoercedVal()->name() << endl;
+	}
 }
+
+/************** Code Gen *******************/
+
+vector<Instruction*>*
+ValueNode::codeGen() {
+	vector<Instruction*>* ics = icode();
+	const Constant* v = new Constant(value());
+	const Register* r = rVal();
+	Instruction::Icode i_code;
+	if (r->regKind() == Register::RegKind::INT)
+		i_code = Instruction::Icode::MOVI;
+	else
+		i_code = Instruction::Icode::MOVF;
+	ics->push_back(new Instruction(i_code, v, NULL, r, NULL));
+	return ics;
+}
+
+vector<Instruction*>*
+OpNode::codeGen() {
+	vector<Instruction*>* ics = NULL, *ics1 = NULL;
+	const Register* a1 = arg_[0]->rVal();
+	ics = arg_[0]->codeGen();
+	if (arity_ == 2) {
+		const Register* a2 = arg_[1]->rVal();
+		ics1 = arg_[1]->codeGen();
+		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
+		else if (ics1) ics = ics1;
+
+		// perform the actual operation
+		if (!ics) ics = new vector<Instruction*>;
+		const Register* u = unCoercedVal();
+		const Register* r = rVal();
+		Type::TypeTag rT = type()->tag();
+		Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
+		Instruction::Icode ic;
+		switch (opCode_) {
+			case OpCode::PLUS:
+				ic = (Type::isIntegral(rT)) ? Instruction::ADD : Instruction::FADD;
+				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
+			default:;
+		}
+		if (Type::isCoerce(rT, cT)) {
+			ic = (Type::isFloat(cT)) ? Instruction::MOVIF : Instruction::MOVFI;
+			ics->push_back(new Instruction(ic, u, NULL, r, NULL));
+		}
+	}
+	return ics;
+}
+

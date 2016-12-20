@@ -78,9 +78,22 @@ class AstNode: public ProgramElem {
   virtual bool operator!=(const AstNode& a) const
   { return !operator==(a); };
 
+  const Register* rVal() { return rVal_; }
+  void rVal(const Register* r) { rVal_ = r; }
+  const Register* lVal() { return lVal_; }
+  void lVal(const Register* l) { lVal_ = l; }
+  const Register* unCoercedVal() { return unCoercedVal_; }
+  void unCoercedVal(const Register* u) { unCoercedVal_ = u; }
+  vector<Instruction*>* icode() { return &icode_; }
+  void icode(vector<Instruction*>* i) { icode_ = *i; }
+
  private:
   NodeType nodeType_;
   const AstNode* operator=(const AstNode& other); /* disable asg */
+  const Register* lVal_;
+  const Register* rVal_;
+  const Register* unCoercedVal_;
+  vector<Instruction*> icode_;
 };
 
 inline ostream& operator<<(ostream& os, const AstNode& an) {
@@ -139,15 +152,6 @@ class RefExprNode: public ExprNode {
   const SymTabEntry* symTabEntry() const { return sym_;};
   void symTabEntry(const SymTabEntry *ste)  { sym_ = ste;};
 
-  const Register* location() const {
-    if (!arg_) cout << "WARNING: returning NULL register\n";
-    return arg_;
-  }
-  Register* location() {
-    if (!arg_) cout << "WARNING: returning NULL register\n";
-    return (Register*) arg_;
-  }
-
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
@@ -156,7 +160,6 @@ class RefExprNode: public ExprNode {
  private:
   string ext_;
   const SymTabEntry* sym_;
-  const Register* arg_;
 };
 
 /****************************************************************/
@@ -185,7 +188,7 @@ class OpNode: public ExprNode {
     // only if types of args k through N are identical, for 1 <= k <= 3,
     // and are given by argType[k-1]
     Type::TypeTag outType_;
-        const char *typeConstraints_;
+    const char *typeConstraints_;
   };
 
  public:
@@ -214,14 +217,12 @@ class OpNode: public ExprNode {
   void memAlloc();
   Type* opTypeCheck(ExprNode* t1, ExprNode* t2, Type::TypeTag lFormType,
     Type::TypeTag rFormType, Type::TypeTag retTag, bool coerce);
+	vector<Instruction*>* codeGen();
 
  private:
   unsigned int arity_;
   OpCode   opCode_;
   vector<ExprNode*> arg_;
-  const Register* reg_;
-  const Register* coercedReg_;
-  vector<Instruction*> icode_;
 };
 
 /****************************************************************/
@@ -242,7 +243,8 @@ class ValueNode: public ExprNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
-  void memAlloc() {}
+  void memAlloc();
+	vector<Instruction*>* codeGen();
 
  private:
   /* val_ field is already included in ExprNode, so no new data members */

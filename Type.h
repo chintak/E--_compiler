@@ -61,6 +61,7 @@ class Type {
   static bool isData(TypeTag t) { return ((t >= VOID) && (t <= CLASS));}
   static bool isValid(TypeTag t) { return ((t >= VOID) && (t <= ANY)); }
   static bool isScalar(TypeTag t) { return ((t >= BOOL) && (t <= DOUBLE)); }
+  static bool isCoerce (TypeTag t1, TypeTag t2);
   static bool isSubType(TypeTag t1, TypeTag t2) {
     /* returns True if t1 is a subtype of t2*/
     if (!(isValid(t2) && isValid(t1))) return false;

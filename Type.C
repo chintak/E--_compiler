@@ -148,3 +148,10 @@ void
 Type::print(ostream& os, int indent) const {
 	os << fullName();
 }
+
+bool Type::isCoerce (TypeTag rT, TypeTag cT) {
+	if (rT == VOID || cT == VOID) return false;
+	// TODO handle cases like, string to int etc
+	if (Type::isIntegral(cT) && Type::isIntegral(rT)) return false;
+	else return true;
+}
