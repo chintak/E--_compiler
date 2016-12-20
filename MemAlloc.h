@@ -7,6 +7,11 @@
 #include "Register.h"
 #include "Type.h"
 
+/*
+R000 BP
+ROO1 SP
+*/
+
 #define IREG_MAX_NUM 999
 #define FREG_MAX_NUM 999
 #define GLOBAL_OFFSET_LOC 0

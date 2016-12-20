@@ -37,6 +37,7 @@ class GlobalEntry: public SymTabEntry {
   void typePrint(ostream&, int indent=0) const;
   const Type* typeCheck();
   void memAlloc();
+  vector<Instruction*>* codeGen();
 
  private:
   vector<RuleNode*> rules_;
@@ -89,6 +90,7 @@ class VariableEntry: public SymTabEntry {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type *typeCheck();
+  vector<Instruction*>* codeGen();
 
  private:
   VarKind vkind_;

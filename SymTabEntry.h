@@ -4,6 +4,7 @@
 #include "SymTab.h"
 #include "Value.h"
 #include "ProgramElem.h"
+#include "Instruction.h"
 
 class SymTabEntry;
 class ExprNode;
@@ -65,6 +66,7 @@ class SymTabEntry: public ProgramElem {
   virtual bool operator!=(const SymTabEntry& ste) const
   { return !operator==(ste); };
   virtual void memAlloc() {};
+  virtual vector<Instruction*>* codeGen() {return NULL;}
 
   virtual void print(ostream& os, int indent=0) const {};
    virtual void typePrint(ostream& os, int indent=0) const {};
@@ -89,6 +91,7 @@ virtual const Type *typeCheck() {return NULL;};
   string name_;
   Kind kind_;
   SymTab* st_;
+  vector<Instruction*> icode_;
 
  private:
   // These two fields are used to link the STEs so that their order

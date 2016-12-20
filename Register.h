@@ -3,12 +3,32 @@
 
 #include <cstdio>
 #include <string>
+#include "Value.h"
 
 using namespace std;
 
-class Register {
+class Arg {
 public:
-    Register(int n) : num_(n) {}
+    enum ArgKind {
+        REGISTER,
+        CONSTANT,
+        LABEL
+    };
+
+    Arg() {}
+    Arg(ArgKind a) { argKind_ = a; }
+    ~Arg() {}
+    ArgKind argKind() { return argKind_; }
+    void argKind(ArgKind a) { argKind_ = a; }
+
+private:
+    ArgKind argKind_;
+};
+
+
+class Register : public Arg {
+public:
+    Register(int n) : Arg(Arg::REGISTER) { num_ = n; }
     ~Register();
     virtual string name() const=0;
     virtual void print(ostream& os, int indent) const=0;
@@ -44,6 +64,26 @@ public:
     inline void print(ostream& os, int indent) const {
         os << name();
     }
+};
+
+class Constant : public Arg {
+public:
+    Constant(Value* v) : Arg(Arg::CONSTANT) { val_ = v; }
+private:
+    Value* val_;
+};
+
+class Label : public Arg {
+public:
+    Label(string l) : Arg(Arg::LABEL), lab_(l) {}
+    ~Label();
+    string name() const { return lab_; }
+    void print(ostream& os, int indent) const {
+        os << name() + string(":");
+    }
+
+private:
+    string lab_;
 };
 
 #endif

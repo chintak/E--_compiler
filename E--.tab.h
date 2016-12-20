@@ -119,7 +119,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 17 "E--_parser.y++" /* yacc.c:1909  */
+#line 19 "E--_parser.y++" /* yacc.c:1909  */
 
   unsigned int       uVal;
   double             dVal;
@@ -146,6 +146,7 @@ union YYSTYPE
   IfNode*            ifVal;
   CompoundStmtNode*  compoundStmtVal;
   RuleNode*          ruleNode;
+  WhileStmtNode*     whileVal;
 
   vector<RuleNode*>* transList;
 
@@ -154,7 +155,7 @@ union YYSTYPE
 
   vector<VariableEntry*>* paramList;
 
-#line 158 "E--_parser.H" /* yacc.c:1909  */
+#line 159 "E--_parser.H" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
