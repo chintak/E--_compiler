@@ -30,3 +30,4 @@ Register* MemAlloc::get_next_freg() {
 	}
 	return new FReg(fRegNum++);
 }
+

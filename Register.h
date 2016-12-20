@@ -20,6 +20,7 @@ public:
     ~Arg() {}
     ArgKind argKind() { return argKind_; }
     void argKind(ArgKind a) { argKind_ = a; }
+    virtual void print(ostream& os, int indent) const=0;
 
 private:
     ArgKind argKind_;
@@ -31,7 +32,6 @@ public:
     Register(int n) : Arg(Arg::REGISTER) { num_ = n; }
     ~Register();
     virtual string name() const=0;
-    virtual void print(ostream& os, int indent) const=0;
     int num() const { return num_; }
 
 private:
@@ -47,6 +47,8 @@ public:
         sprintf(c, "R%03d", num());
         return string(c);
     }
+    static IReg* BP(){return new IReg(0);};
+    static IReg* SP(){return new IReg(1);};
     inline void print(ostream& os, int indent) const {
         os << name();
     }
@@ -68,9 +70,12 @@ public:
 
 class Constant : public Arg {
 public:
-    Constant(Value* v) : Arg(Arg::CONSTANT) { val_ = v; }
+    Constant(const Value* v) : Arg(Arg::CONSTANT) { val_ = v; }
 private:
-    Value* val_;
+    const Value* val_;
+    void print(ostream& os, int indent) const {
+        val_->print(os, indent);
+    }
 };
 
 class Label : public Arg {

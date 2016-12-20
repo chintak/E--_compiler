@@ -4,7 +4,7 @@ CXXFLAGS = -g -O -Wno-deprecated -std=c++0x -Wall
 FLEX = flex
 BISON = bison
 
-demo:	driveParse.o E--_lexer.o E--_parser.o Ast.o STEClasses.o SymTabMgr.o Value.o Type.o SymTabEntry.o Error.o ParserUtil.o SymTab.o MemAlloc.o Register.h
+demo:	driveParse.o E--_lexer.o E--_parser.o MemAlloc.o Instruction.o Ast.o STEClasses.o SymTabMgr.o Value.o Type.o SymTabEntry.o Error.o ParserUtil.o SymTab.o MemAlloc.o Register.h
 	$(CXX) -o $@ $^ -lfl
 
 E--_lexer.o:	E--_lexer.C E--.tab.h
@@ -24,6 +24,7 @@ Error.o: Error.h Error.C
 ParserUtil.o: ParserUtil.h ParserUtil.C
 SymTab.o: SymTab.h SymTab.C
 MemAlloc.o: MemAlloc.h MemAlloc.C
+Instruction.o: Instruction.h Instruction.C
 
 clean:
 	-echo "Removing all object files!"

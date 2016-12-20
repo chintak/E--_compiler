@@ -1,0 +1,10 @@
+double x = 6.0;
+void g() {
+int a1, a2;
+a1=1;
+};
+
+any -> {
+        g();
+} ;
+

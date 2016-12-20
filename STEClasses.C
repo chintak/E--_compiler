@@ -288,7 +288,7 @@ GlobalEntry::codeGen() {
 	for (it = st->begin(); it != st->end(); ++it)  {
 		if ((*it)->kind() == SymTabEntry::Kind::VARIABLE_KIND) {
 			ve = (VariableEntry *)(*it);
-			if (ve->varKind() == VariableEntry::GLOBAL_VAR && ve->initVal())
+			if (ve->varKind() == VariableEntry::GLOBAL_VAR)
 				ve->codeGen();
 		}
 	}
@@ -298,8 +298,49 @@ GlobalEntry::codeGen() {
 vector<Instruction*>*
 VariableEntry::codeGen() {
 	// move the variable offset into a register
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+	if (this->initVal() == NULL)
+		return instr_set;
 
-	return NULL;
+	Register* r = NULL;
+	const Value* v = new Value(offSet_+base_, Type::UINT);
+	Constant* off = new Constant(v);
+
+	Instruction::Icode i_code1 = Instruction::Icode::MOVI;
+	Instruction::Icode i_code2 = Instruction::Icode::STI;
+	if (type()->tag() == Type::TypeTag::DOUBLE)
+	{
+		i_code1 = Instruction::Icode::MOVF;
+		i_code2 = Instruction::Icode::STF;
+	}
+	if (i_code1 == Instruction::Icode::MOVI)
+		r  = MemAlloc::get_next_ireg();
+	else
+		r  = MemAlloc::get_next_ireg();
+
+	instr_set->push_back(new Instruction(i_code1,new Constant(initVal()->value()),r)); // stores initval into a  reg.
+	if (varKind() != VariableEntry::VarKind::GLOBAL_VAR)
+	{
+		Register* r1 = MemAlloc::get_next_ireg();
+		instr_set->push_back(new Instruction(Instruction::Icode::MOVI, off, r1)); // move offset into r1
+		Register* r2 = MemAlloc::get_next_ireg();
+		if (varKind() == VariableEntry::VarKind::LOCAL_VAR)
+			instr_set->push_back(new Instruction(Instruction::Icode::ADD, r1, IReg::BP(), r2)); // store final offset in r2
+		else if (varKind() == VariableEntry::VarKind::PARAM_VAR)
+			instr_set->push_back(new Instruction(Instruction::Icode::ADD, r1, IReg::SP(), r2)); // store final offset in r2
+
+		instr_set->push_back(new Instruction(i_code2,r,r2)); // updates value stored in mem.	
+		
+	}
+	instr_set->push_back(new Instruction(i_code2,r,off)); // updates value stored in mem.
+
+	for (unsigned int i = 0; i < instr_set->size(); i++)
+	{
+		(*instr_set)[i]->print(cout,0);
+		cout << "\n";
+	}
+
+	return instr_set;
 }
 
 

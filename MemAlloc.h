@@ -36,4 +36,5 @@ private:
     static int globalOffset;
 };
 
+
 #endif
