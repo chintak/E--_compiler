@@ -7,6 +7,8 @@
 
 using namespace std;
 
+class Register;
+
 class Arg {
 public:
     enum ArgKind {
@@ -18,6 +20,7 @@ public:
     Arg() {}
     Arg(ArgKind a) { argKind_ = a; }
     ~Arg() {}
+    virtual Type::TypeTag typeTag() const=0;
     ArgKind argKind() { return argKind_; }
     void argKind(ArgKind a) { argKind_ = a; }
     virtual void print(ostream& os, int indent) const=0;
@@ -42,6 +45,10 @@ public:
     int num() const { return num_; }
     RegKind regKind() { return regKind_; }
     RegKind regKind() const { return regKind_; }
+    Type::TypeTag typeTag() const {
+        if (regKind() == Register::INT) return Type::INT;
+        else return Type::DOUBLE;
+    }
 
 private:
     int num_;
@@ -79,11 +86,16 @@ public:
 class Constant : public Arg {
 public:
     Constant(const Value* v) : Arg(Arg::CONSTANT) { val_ = v; }
+    const Value* val() { return val_; }
+    Type::TypeTag typeTag() const {
+        return val_->type()->tag();
+    }
+
 private:
-    const Value* val_;
     void print(ostream& os, int indent) const {
         val_->print(os, indent);
     }
+    const Value* val_;
 };
 
 class Label : public Arg {

@@ -93,15 +93,15 @@ class VariableEntry: public SymTabEntry {
   void memAlloc();
   vector<Instruction*>* codeGen();
 
-  const Register* lVal() { return lVal_; }
-  void lVal(const Register* l) { lVal_ = l; }
+  const Arg* lVal() { return lVal_; }
+  void lVal(const Arg* l) { lVal_ = l; }
 
  private:
   VarKind vkind_;
   int offSet_;
   int base_;  // could be static area addr or base pointer addr
   ExprNode* initVal_;
-  const Register* lVal_;
+  const Arg* lVal_;
 };
 
 class ClassEntry: public SymTabEntry {

@@ -78,21 +78,21 @@ class AstNode: public ProgramElem {
   virtual bool operator!=(const AstNode& a) const
   { return !operator==(a); };
 
-  const Register* rVal() { return rVal_; }
-  void rVal(const Register* r) { rVal_ = r; }
-  const Register* lVal() { return lVal_; }
-  void lVal(const Register* l) { lVal_ = l; }
-  const Register* unCoercedVal() { return unCoercedVal_; }
-  void unCoercedVal(const Register* u) { unCoercedVal_ = u; }
+  const Arg* rVal() { return rVal_; }
+  void rVal(const Arg* r) { rVal_ = r; }
+  const Arg* lVal() { return lVal_; }
+  void lVal(const Arg* l) { lVal_ = l; }
+  const Arg* unCoercedVal() { return unCoercedVal_; }
+  void unCoercedVal(const Arg* u) { unCoercedVal_ = u; }
   vector<Instruction*>* icode() { return &icode_; }
   void icode(vector<Instruction*>* i) { icode_ = *i; }
 
  private:
   NodeType nodeType_;
   const AstNode* operator=(const AstNode& other); /* disable asg */
-  const Register* lVal_;
-  const Register* rVal_;
-  const Register* unCoercedVal_;
+  const Arg* lVal_;
+  const Arg* rVal_;
+  const Arg* unCoercedVal_;
   vector<Instruction*> icode_;
 };
 
@@ -156,6 +156,7 @@ class RefExprNode: public ExprNode {
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
   void memAlloc();
+	vector<Instruction*>* codeGen();
 
  private:
   string ext_;

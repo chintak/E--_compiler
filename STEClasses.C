@@ -258,7 +258,7 @@ VariableEntry::memAlloc() {
 	if (initVal()) {
 		if (vkind_ == VariableEntry::LOCAL_VAR) {
 			lVal_ = MemAlloc::get_next_reg(type());
-			cout << "malloc: " << lVal_->name() << " to " << name() << endl;
+			// cout << "malloc: " << ((Register*) lVal_)->name() << " to " << name() << endl;
 		}
 		initVal()->memAlloc();  // allocate regs for computing rhs
 	}
@@ -311,7 +311,7 @@ GlobalEntry::codeGen() {
 		}
 	}
 	for (unsigned int i = 0; i < instr_set->size(); i++) {
-		(*instr_set)[i]->print(cout,0);
+		(*instr_set)[i]->print(cout, 0);
 		cout << "\n";
 	}
 	return instr_set;
@@ -327,12 +327,13 @@ VariableEntry::codeGen() {
 	ExprNode* rhs = initVal();
 	vector<Instruction*>* instr_set = rhs->codeGen();
 	if (!instr_set) instr_set = new vector<Instruction*>;
-	const Register* r = rhs->rVal();
+	const Arg* r = rhs->rVal();
 
 	// do rval computation
 	if (vkind_ == VariableEntry::GLOBAL_VAR) {
 		const Value* o = new Value(offSet_, Type::UINT);
 		const Arg* l = new Constant(o);
+		lVal(l);
 
 		// store the value
 		Instruction::Icode i_code = Instruction::Icode::STI;
@@ -343,7 +344,7 @@ VariableEntry::codeGen() {
 		// do lval computation
 		const Value* o = new Value(offSet_, Type::UINT);
 		const Arg* off = new Constant(o);
-		const Register* l = lVal();
+		const Arg* l = lVal();
 		instr_set->push_back(
 			new Instruction(Instruction::Icode::MOVI, off, NULL, l, NULL));
 		instr_set->push_back(

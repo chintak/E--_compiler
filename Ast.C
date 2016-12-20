@@ -1110,7 +1110,7 @@ vector<Instruction*>*
 ValueNode::codeGen() {
 	vector<Instruction*>* ics = icode();
 	const Constant* v = new Constant(value());
-	const Register* r = rVal();
+	const Register* r = (const Register*) rVal();
 	Instruction::Icode i_code;
 	if (r->regKind() == Register::RegKind::INT)
 		i_code = Instruction::Icode::MOVI;
@@ -1121,20 +1121,32 @@ ValueNode::codeGen() {
 }
 
 vector<Instruction*>*
+RefExprNode::codeGen() {
+	vector<Instruction*>* ics = icode();
+	VariableEntry* ve = (VariableEntry*) symTabEntry();
+	const Arg* l = ve->lVal();
+	const Arg* r = rVal();
+	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
+	ics->push_back(new Instruction(ic, l, NULL, r, NULL));
+	return ics;
+}
+
+
+vector<Instruction*>*
 OpNode::codeGen() {
 	vector<Instruction*>* ics = NULL, *ics1 = NULL;
-	const Register* a1 = arg_[0]->rVal();
+	const Arg* a1 = arg_[0]->rVal();
 	ics = arg_[0]->codeGen();
 	if (arity_ == 2) {
-		const Register* a2 = arg_[1]->rVal();
+		const Arg* a2 = arg_[1]->rVal();
 		ics1 = arg_[1]->codeGen();
 		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
 		else if (ics1) ics = ics1;
 
 		// perform the actual operation
 		if (!ics) ics = new vector<Instruction*>;
-		const Register* u = unCoercedVal();
-		const Register* r = rVal();
+		const Arg* u = unCoercedVal();
+		const Arg* r = rVal();
 		Type::TypeTag rT = type()->tag();
 		Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
 		Instruction::Icode ic;
@@ -1149,6 +1161,7 @@ OpNode::codeGen() {
 			ics->push_back(new Instruction(ic, u, NULL, r, NULL));
 		}
 	}
+	icode(ics);
 	return ics;
 }
 
