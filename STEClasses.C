@@ -245,7 +245,7 @@ GlobalEntry::memAlloc() {
 			if (ve->varKind() == VariableEntry::GLOBAL_VAR) {
 				ve->offSet(staticAreaLoc);
 				staticAreaLoc++;
-				if (ve->initVal()) ve->memAlloc();
+				ve->memAlloc();
 			}
 		} else if ((*it)->kind() == SymTabEntry::Kind::FUNCTION_KIND) {
 			(*it)->memAlloc();
@@ -256,12 +256,15 @@ GlobalEntry::memAlloc() {
 void
 VariableEntry::memAlloc() {
 	if (initVal()) {
-		if (vkind_ == VariableEntry::LOCAL_VAR) {
-			lVal_ = MemAlloc::get_next_reg(name(), type());
-			// cout << "malloc: " << ((Register*) lVal_)->name() << " to " << name() << endl;
-		}
 		initVal()->memAlloc();  // allocate regs for computing rhs
 	}
+	if (vkind_ == VariableEntry::LOCAL_VAR) {
+		lVal(MemAlloc::get_next_reg(name(), type()));
+	} else if (vkind_ == VariableEntry::GLOBAL_VAR) {
+		const Value* o = new Value(offSet_, Type::UINT);
+		const Constant* c = new Constant(o);
+		lVal(c);
+	} // TODO write condition for PARAM_VAR
 }
 
 void
