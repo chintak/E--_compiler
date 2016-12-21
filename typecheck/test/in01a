@@ -9,6 +9,7 @@
 
     int i = 2, j=3;
     
+/*
     class CString;
     class CStr;
 
@@ -18,12 +19,13 @@
     CStr cs3=cs2;
 	
     bool a,c=false;
-   
+*/ 
     double x=i, d=a;
 
     byte b=i;
+/*
     string s ;
-    
+ */  
     int f=2+i;   
  
     int flags;     

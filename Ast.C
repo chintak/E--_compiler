@@ -1170,6 +1170,19 @@ OpNode::codeGen() {
 			case OpCode::PLUS:
 				ic = (Type::isIntegral(rT)) ? Instruction::ADD : Instruction::FADD;
 				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
+				break;
+			case OpCode::MINUS:
+				ic = (Type::isIntegral(rT)) ? Instruction::SUB: Instruction::FSUB;
+				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
+				break;
+			case OpCode::MULT:
+				ic = (Type::isIntegral(rT)) ? Instruction::MUL: Instruction::FMUL;
+				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
+				break;
+			case OpCode::DIV:
+				ic = (Type::isIntegral(rT)) ? Instruction::DIV: Instruction::FDIV;
+				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
+				break;
 			default:;
 		}
 		if (Type::isCoerce(rT, cT)) {
