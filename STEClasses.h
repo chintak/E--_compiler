@@ -56,6 +56,7 @@ class RuleBlockEntry: public BlockEntry {
   RuleBlockEntry(int line=0, int column=0, string file=""):
     BlockEntry(newName("rule"), line,column, file) { kind(SymTabEntry::Kind::RULE_BLOCK_KIND);};
   ~RuleBlockEntry() {};
+  vector<Instruction*>* codeGen();
 };
 
 /****************************************************************
@@ -132,6 +133,7 @@ class FunctionEntry: public SymTabEntry {
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
   void memAlloc();
+  vector<Instruction*>* codeGen();
 
  private:
   CompoundStmtNode* body_;
@@ -145,6 +147,7 @@ class EventEntry: public SymTabEntry {
 
   void print(ostream& out, int indent=0) const;
   void typePrint(ostream& out, int indent=0) const;
+  vector<Instruction*>* codeGen();
 };
 
 #endif

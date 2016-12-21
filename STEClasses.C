@@ -1,6 +1,9 @@
 #include "STEClasses.h"
 #include "Value.h"
 #include "ParserUtil.h"
+#include <string>
+
+using namespace std;
 
 void GlobalEntry::print(ostream& out, int indent) const
 {
@@ -315,11 +318,25 @@ GlobalEntry::codeGen() {
 			}
 		}
 	}
+
+	if (rules_.size() != 0) {
+		int count  = 1;
+		string label = "rule_body_";
+		Label* currlabel = new Label(label + to_string(count));
+        for(vector<RuleNode*>::const_iterator it = rules_.begin(); it != rules_.end(); ++it) {
+        	count++;
+            Label* nextlabel = new Label(label + to_string(count));
+            (*it)->codeGen(currlabel,nextlabel);
+            currlabel = nextlabel;
+        }
+    }
+
 	if (instr_set)
-			for (unsigned int i = 0; i < instr_set->size(); i++) {
-					(*instr_set)[i]->print(cout, 0);
-					cout << "\n";
-			}
+		for (unsigned int i = 0; i < instr_set->size(); i++) {
+				(*instr_set)[i]->print(cout, 0);
+				cout << "\n";
+		}
+
 	return instr_set;
 }
 
@@ -394,4 +411,60 @@ VariableEntry::codeGen() {
 	return instr_set;
 }
 
+
+vector<Instruction*>*
+FunctionEntry::codeGen() {
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+
+	if (body() != NULL)
+	{
+		// set BP = SP
+		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,SP(),BP()));
+
+		// alloc space for ret val
+		const Value* v1 = new Value(1, Type::TypeTag::UINT);
+		Constant* incr1 = new Constant(v1);
+		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,BP()));
+		instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,BP()));
+
+		// process instructions in the body
+		vector<Instruction*>* instr_set_body = body()->codeGen();
+		instr_set->insert(instr_set->end(), instr_set_body->begin(), instr_set_body->end());
+
+		// pop stack uptil bp and set sp
+		const Value* v2 = new Value(2, Type::UINT);
+		Constant* incr2 = new Constant(v2);
+		instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr2,SP()));
+		instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr2,SP()));
+
+		// jump to ret.addr
+		Register* r1 = MemAlloc::get_next_ireg();
+		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr2,r1));
+		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
+		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));
+
+	}
+	else
+	{
+		// jump back to ret_addr
+		const Value* v1 = new Value(1, Type::UINT);
+		Constant* incr1 = new Constant(v1);
+		Register* r1 = MemAlloc::get_next_ireg();
+		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr1,r1));
+		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
+		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));
+	}
+
+	return instr_set;
+}
+
+vector<Instruction*>*
+EventEntry::codeGen() {
+	return NULL;
+}
+
+vector<Instruction*>*
+RuleBlockEntry::codeGen() {
+	return NULL;
+}
 
