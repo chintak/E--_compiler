@@ -894,6 +894,8 @@ InvocationNode::typeCheck() {
 	int i = 1;
 	bool failed = false;
 
+	if (!num_form_param && !num_act_param)
+		return ste_->type()->retType();
 	for (itf = formParamTypes->begin(), ita = actParams->begin();
 			 itf != formParamTypes->end() && ita != actParams->end();
 			 ++itf, ++ita, i++) {
