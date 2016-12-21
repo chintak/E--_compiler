@@ -544,6 +544,7 @@ class IfNode: public StmtNode{
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
+  void memAlloc();
   vector<Instruction*>* codeGen();
   vector<Instruction*>* codeGen(Label *lbl);
 

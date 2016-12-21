@@ -63,5 +63,13 @@ const string Instruction::icode[] = {
     "STF",
     "IN",
     "INI",
-    "INF"
+    "INF",
+    "JMPC GT",
+    "JMPC FGT",
+    "JMPC GE",
+    "JMPC FGE",
+    "JMPC EQ",
+    "JMPC FEQ",
+    "JMPC NE",
+    "JMPC FNE"
 };
