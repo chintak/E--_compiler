@@ -279,6 +279,7 @@ class InvocationNode: public ExprNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  vector<Instruction*>* codeGen();
 
  private:
   vector<ExprNode*>* params_;
@@ -427,7 +428,7 @@ class StmtNode: public AstNode {
   void print(ostream& os, int indent) const = 0;
   void typePrint(ostream& os, int indent) const = 0;
   const Type* typeCheck() = 0;
-  vector<Instruction*>* codeGen(Label* currLabel) { return NULL;}
+  virtual vector<Instruction*>* codeGen(Label* currLabel) { return NULL;}
   vector<Instruction*>* codeGen() { return NULL;}
  private:
   StmtNodeKind skind_;
@@ -451,7 +452,9 @@ class ReturnStmtNode: public StmtNode {
       if(expr_ != NULL) expr_->typePrint(os, indent); else os << "NULL";};
 
   const Type* typeCheck();
-  vector<Instruction*>* codeGen() { return NULL;}
+  vector<Instruction*>* codeGen();
+  FunctionEntry* fe() { return fun_; }
+  ExprNode* expr() { return expr_; }
 
  private:
   ExprNode* expr_;
@@ -478,7 +481,8 @@ class ExprStmtNode: public StmtNode {
     }
   };
   const Type* typeCheck();
-  vector<Instruction*>* codeGen() { return NULL;}
+  vector<Instruction*>* codeGen();
+  ExprNode* expr() { return expr_; }
 
  private:
   ExprNode* expr_;
@@ -504,12 +508,12 @@ class CompoundStmtNode: public StmtNode{
   void  print(ostream& os, int indent) const;
   void  typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
-  vector<Instruction*>* codeGen() { return NULL;}
+  vector<Instruction*>* codeGen();
 
  private:
   CompoundStmtNode(const CompoundStmtNode&);
 
-  list<StmtNode*>   *stmts_;
+  list<StmtNode*>* stmts_;
 };
 
 /****************************************************************/
@@ -534,7 +538,7 @@ class IfNode: public StmtNode{
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
-  vector<Instruction*>* codeGen() { return NULL;}
+  vector<Instruction*>* codeGen();
 
  private:
   ExprNode *cond_;

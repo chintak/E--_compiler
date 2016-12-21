@@ -428,32 +428,12 @@ FunctionEntry::codeGen() {
 
 	if (body() != NULL)
 	{
-		// set BP = SP
-		if (SP())
-			cout << "\nSP is not null\n";
-		else
-			cout << "\nSP is null\n";
-
-		if (MemAlloc::SP_)
-			cout << "\nSP in memAlloc is not null\n";
-		else
-			cout << "\nSP in memAlloc is null\n";
-
-		if (BP())
-			cout << "\nBP is not null\n";
-		else
-			cout << "\nBP is null\n";
-
-
 		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,SP(),BP()));
 		// alloc space for ret val
 		const Value* v1 = new Value(1, Type::TypeTag::UINT);
 		Constant* incr1 = new Constant(v1);
-		// cout << "\n2\n";
 		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,BP()));
-		// cout << "\n3\n";
 		instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,BP()));
-		// cout << "\n4\n";
 
 		// process instructions in the body
 		// vector<Instruction*>* instr_set_body = body()->codeGen();
