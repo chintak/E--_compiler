@@ -286,6 +286,8 @@ FunctionEntry::memAlloc() {
 	VariableEntry* ve;
 	SymTab::iterator it = NULL;
 
+	if (!st) return;
+
 	for (it = st->begin(); it != st->end(); ++it)  {
 		if ((*it)->kind() == SymTabEntry::Kind::VARIABLE_KIND) {
 			ve = (VariableEntry *)(*it);
