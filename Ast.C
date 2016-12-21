@@ -1128,6 +1128,13 @@ OpNode::memAlloc() {
 }
 
 void
+IfNode::memAlloc() {
+	cond()->memAlloc();
+	if (then_) then_->memAlloc();
+	if (else_) else_->memAlloc();
+}
+
+void
 InvocationNode::memAlloc() {
 	vector<ExprNode*>* args = params();
 	for (auto it = args->begin(); it != args->end(); ++it) {
@@ -1296,7 +1303,6 @@ vector<Instruction*>*
 RuleNode::codeGen(Label* currLabel, Label* nextlabel) {
 	vector<Instruction*>* instr_set = pat()->codeGen(currLabel, nextlabel);
 	vector<Instruction*>* instr_set_reaction = reaction()->codeGen(currLabel);
-	cout << "rule here\n";
 	if (instr_set_reaction)
 		instr_set->insert(instr_set->end(), instr_set_reaction->begin(), instr_set_reaction->end());
 	return instr_set;
@@ -1412,8 +1418,8 @@ CompoundStmtNode::codeGen(Label* currLabel) {
 	vector<Instruction*>* instr_set_stmt;
 	Label* endLab;
 	for (auto it = stmtList->begin(); it != stmtList->end(); ++it) {
-		cout << "stmt here\n";
-		if ((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::EXPR) {
+		if (((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::EXPR) ||
+			((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::IF)) {
 			endLab = LabelGenerator::getLabel();
 			instr_set_stmt = (*it)->codeGen(endLab);
 		} else {
@@ -1452,18 +1458,18 @@ BreakStmtNode::codeGen() {
 
 vector<Instruction*>*
 IfNode::codeGen(Label *endlbl) {
-		Label *thenlbl = new Label(Label::newlbl());
-		vector<Instruction*>* ics = NULL, *ics1 = NULL;
-		ics = cond()->codeGen(thenlbl);
-		if (elseStmt()) {
-				ics1 = elseStmt()->codeGen();
-				if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
-				else if (ics1) ics = ics1;
-				ics->push_back(new Instruction(Instruction::JMP, endlbl));
-		}
-		ics1 = thenStmt()->codeGen(thenlbl);
-		ics->insert(ics->end(), ics1->begin(), ics1->end());
-		return ics;
+	Label *thenlbl = new Label(Label::newlbl());
+	vector<Instruction*>* ics = NULL, *ics1 = NULL;
+	ics = cond()->codeGen(thenlbl);
+	if (elseStmt()) {
+		ics1 = elseStmt()->codeGen();
+		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
+		else if (ics1) ics = ics1;
+		ics->push_back(new Instruction(Instruction::JMP, endlbl));
+	}
+	ics1 = thenStmt()->codeGen(thenlbl);
+	ics->insert(ics->end(), ics1->begin(), ics1->end());
+	return ics;
 }
 
 vector<Instruction*>*
