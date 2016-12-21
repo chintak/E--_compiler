@@ -84,8 +84,8 @@ void rtexit(const char *s) {
 
 void usage(const char *cname) {
    fprintf(stderr, "%s [-dr] [-df] [-dm min max] [-m sz]\n", cname);
-   fprintf(stderr, "\t-dr: Dump R000 to R009 at the end of execution\n");
-   fprintf(stderr, "\t-df: Dump F000 to F009 at the end of execution\n");
+   fprintf(stderr, "\t-dr: Dump R000 to R024 at the end of execution\n");
+   fprintf(stderr, "\t-df: Dump F000 to F024 at the end of execution\n");
    fprintf(stderr, "\t-dm min max: Dump memory locations min through max\n");
    fprintf(stderr, "\t-m sz: Set memory size to sz words (must be multiple of page size)\n");
    exit(1);
@@ -181,7 +181,7 @@ void E_RT_exit() {
              R020, R021, R022, R023, R024);
    }
    if (fregdump) {
-      printf("\nDump of Registers F000 to F019:\n");
+      printf("\nDump of Registers F000 to F024:\n");
       printf("F000=%f\tF001=%f\tF002=%f\tF003=%f\tF004=%f\n",
              F000, F001, F002, F003, F004);
       printf("F005=%f\tF006=%f\tF007=%f\tF008=%f\tF009=%f\n",
