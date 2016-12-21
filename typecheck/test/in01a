@@ -32,7 +32,6 @@
     int flags;     
     
     unsigned int mode;	
-	int k = (23 * (-i)/j);
 
     open(file, flags, mode) -> {
                      
