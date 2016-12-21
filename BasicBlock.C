@@ -82,7 +82,7 @@ void liveVarAnalysis(vector<BasicBlock*>* blocks) {
         succ = (*blocks)[i]->getSucc();
         if (succ) {
             for (unsigned int j=0; j<succ->size(); j++) {
-                temp.insert((*succ)[i]->In.begin(), (*succ)[i]->In.end());
+                temp.insert((*succ)[j]->In.begin(), (*succ)[j]->In.end());
             }
         }
         if ((*blocks)[i]->Out == temp) sameOut=true;
