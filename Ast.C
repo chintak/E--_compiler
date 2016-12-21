@@ -1,5 +1,6 @@
 #include "Ast.h"
 #include "ParserUtil.h"
+#include "LabelGenerator.h"
 
 AstNode::AstNode(NodeType nt, int line, int column, string file):
 	ProgramElem(NULL, line, column, file) {
@@ -1251,3 +1252,95 @@ PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
 	}
 	return instr_set;
 }
+
+vector<Instruction*>*
+InvocationNode::codeGen() {
+
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+	FunctionEntry* fe = (FunctionEntry*) symTabEntry();
+	Label* l = fe->label();
+	vector<ExprNode*>* args = params();
+	const vector<Type*> *argTypes = type()->argTypes();
+	auto it1 = args->begin();
+	
+	const Value* v1 = new Value(1, Type::TypeTag::UINT);
+	Constant* incr1 = new Constant(v1);
+	
+	for (auto it = argTypes->begin(); it != argTypes->end(); ++it,++it1)
+	{
+		if ((*it)->tag() == Type::TypeTag::INT)
+		{
+			instr_set->push_back(new Instruction(Instruction::Icode::STI,(*it1)->rVal(),SP()));
+		}
+		else if ((*it)->tag() == Type::TypeTag::DOUBLE)
+		{
+			instr_set->push_back(new Instruction(Instruction::Icode::STF,(*it1)->rVal(),SP()));
+		}
+		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr1,SP()));
+	}
+	Register* r = MemAlloc::get_next_temp_reg(&Type::intType);
+	instr_set->push_back(new Instruction(Instruction::Icode::MOVL,l,r));
+	instr_set->push_back(new Instruction(Instruction::Icode::STI,SP(),SP()));
+	instr_set->push_back(new Instruction(Instruction::Icode::JMP,l));
+
+	return instr_set;
+}
+
+vector<Instruction*>*
+ReturnStmtNode::codeGen() {
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+	
+	const Value* v1 = new Value(1, Type::UINT);
+	Constant* incr1 = new Constant(v1);
+	Register* r = MemAlloc::get_next_temp_reg(&Type::intType);
+
+	instr_set->push_back(new Instruction(Instruction::Icode::ADD,BP(),incr1,r));
+	if (expr()->type()->tag() == Type::TypeTag::INT)
+		instr_set->push_back(new Instruction(Instruction::Icode::STI,expr()->rVal(),r));
+	else if ((expr()->type()->tag() == Type::TypeTag::DOUBLE))
+		instr_set->push_back(new Instruction(Instruction::Icode::STF,expr()->rVal(),r));
+
+	return instr_set;	
+}
+
+vector<Instruction*>*
+ExprStmtNode::codeGen() {
+	return expr()->codeGen();
+}
+
+
+vector<Instruction*>*
+CompoundStmtNode::codeGen() {
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+
+	const list<StmtNode*>* stmtList = stmts();
+	for (auto it = stmtList->begin(); it != stmtList->end(); ++it)
+	{
+		vector<Instruction*>* instr_set_stmt = (*it)->codeGen();
+		instr_set->insert(instr_set->end(), instr_set_stmt->begin(), instr_set_stmt->end());
+	}
+	return instr_set;
+}
+
+vector<Instruction*>*
+IfNode::codeGen() {
+	vector<Label*>* labels = LabelGenerator::getIfLabel();
+	Label* ifTrue = (*labels)[0]; 
+	Label* ifFalse = (*labels)[1];
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+	vector<Instruction*>* instr_set_cond = cond_->codeGen(ifTrue, ifFalse);
+	vector<Instruction*>* instr_set_then = then_->codeGen(ifTrue);
+	vector<Instruction*>* instr_set_else = else_->codeGen(ifTrue);
+
+	instr_set->insert(instr_set->end(), instr_set_cond->begin(), instr_set_cond->end());
+	instr_set->insert(instr_set->end(), instr_set_then->begin(), instr_set_then->end());
+	instr_set->insert(instr_set->end(), instr_set_else->begin(), instr_set_else->end());
+
+	return instr_set;
+}
+
+
+
+
+
+
