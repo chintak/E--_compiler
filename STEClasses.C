@@ -437,8 +437,8 @@ FunctionEntry::codeGen() {
 
 		// process instructions in the body
 
-		// vector<Instruction*>* instr_set_body = body()->codeGen();
-		// instr_set->insert(instr_set->end(), instr_set_body->begin(), instr_set_body->end());
+		vector<Instruction*>* instr_set_body = body()->codeGen();
+		instr_set->insert(instr_set->end(), instr_set_body->begin(), instr_set_body->end());
 		
 		// pop stack uptil bp and set sp
 		const Value* v2 = new Value(2, Type::UINT);

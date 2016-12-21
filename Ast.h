@@ -595,7 +595,7 @@ class WhileStmtNode: public StmtNode{
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
-
+  vector<Instruction*>* codeGen();
  private:
   ExprNode *cond_;
   StmtNode *body_;
@@ -619,6 +619,7 @@ class BreakStmtNode: public StmtNode {
 	if(val_ != NULL) os << "UINT"; else os << "NULL";};
 
   const Type* typeCheck() { return Type::type[Type::VOID]; }
+  vector<Instruction*>* codeGen();
 
  private:
   Value* val_;
