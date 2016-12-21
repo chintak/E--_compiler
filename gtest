@@ -1,17 +1,7 @@
-int x, y=2;
-bool condition;
-
+int x = 1, y=2;
+int z = x & y;
+int a = x | y;
+int b = x ^ y;
 any -> {
-	x = 5;
-	if (condition) {
-		while (condition) {
-			if (y==2) {
-				break 1;
-			}
-		}
-	}
-	while (x + y > 100) {
-		break 5;
-	}
-	break 1;
+		;
 }

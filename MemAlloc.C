@@ -21,15 +21,12 @@ const Register* SP() { return (const Register*) MemAlloc::SP_; }
 
 Register* MemAlloc::get_next_reg(string vName, const Type* t) {
 	Register* r = NULL;
-	if (Type::isIntegral(t->tag()))
-		r = get_next_ireg();
-	else if (Type::isFloat(t->tag()))
+	if (Type::isFloat(t->tag()))
 		r = get_next_freg();
-	if (r) {
-		varToRegMap[vName] = r;
-		regToVarMap[r] = vName;
-		r->varName(vName);
-	}
+	else r = get_next_ireg();
+	varToRegMap[vName] = r;
+	regToVarMap[r] = vName;
+	r->varName(vName);
 	return r;
 }
 
