@@ -403,9 +403,7 @@ VariableEntry::codeGen() {
 
 	// do rval computation
 	if (vkind_ == VariableEntry::GLOBAL_VAR) {
-		const Value* o = new Value(offSet_, Type::UINT);
-		const Arg* l = new Constant(o);
-		lVal(l);
+		const Arg* l = lVal();
 
 		// store the value
 		Instruction::Icode i_code = Instruction::Icode::STI;
