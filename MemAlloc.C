@@ -1,4 +1,7 @@
 #include "MemAlloc.h"
+#include <iostream>
+
+using namespace std;
 
 map<Register*, string> MemAlloc::regToVarMap;
 map<string, Register*> MemAlloc::varToRegMap;
@@ -47,4 +50,12 @@ Register* MemAlloc::get_next_freg() {
 	}
 	return new FReg(fRegNum++);
 }
+
+Register* MemAlloc::BP_ = MemAlloc::get_next_reg(
+	string("BP"), Type::type[Type::INT]);
+Register* MemAlloc::SP_ = MemAlloc::get_next_reg(
+	"SP", Type::type[Type::INT]);
+
+Register* BP() { return MemAlloc::BP_; }
+Register* SP() { return MemAlloc::SP_; }
 
