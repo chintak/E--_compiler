@@ -1152,3 +1152,51 @@ OpNode::codeGen() {
 	return ics;
 }
 
+vector<Instruction*>*
+RuleNode::codeGen(Label* currLabel, Label* nextlabel) {
+
+	vector<Instruction*>* instr_set = pat()->codeGen(currLabel, nextlabel);
+	vector<Instruction*>* instr_set_reaction = reaction()->codeGen(currLabel);
+	instr_set->insert(instr_set->end(), instr_set_reaction->begin(), instr_set_reaction->end());
+	return instr_set;
+}
+
+vector<Instruction*>*
+PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
+
+	vector<Instruction*>* instr_set = new vector<Instruction*>();
+
+	EventEntry *ee = event();
+	
+	vector<Type*>* argTypes = ee->type()->argTypes();
+	vector<VariableEntry*>* args = params();
+	
+	vector<VariableEntry*>::iterator it1;
+	vector<Type*>::iterator it2;
+
+	Register * r = MemAlloc::get_next_ireg();
+	instr_set->push_back(new Instruction(Instruction::Icode::IN, r));
+
+
+	for (it2 = argTypes->begin(), it1 = args->begin(); it2 != argTypes->end(); ++it1, ++it2)
+	{
+		VariableEntry* ve = (*it1);
+		const Register* r = ve->lVal();
+
+		if ((*it2)->tag() != Type::TypeTag::INT)
+		{
+			instr_set->push_back(new Instruction(Instruction::Icode::INI, r));
+		}
+		else if ((*it2)->tag() != Type::TypeTag::DOUBLE)
+		{
+			instr_set->push_back(new Instruction(Instruction::Icode::INF, r));
+		}
+	}
+
+	if (cond())
+	{
+		vector<Instruction*>* instr_set_cond = cond()->codeGen(currLabel,nextlabel);
+		instr_set->insert(instr_set->end(), instr_set_cond->begin(), instr_set_cond->end());
+	}
+	return instr_set;
+}

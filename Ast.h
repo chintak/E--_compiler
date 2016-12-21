@@ -129,6 +129,8 @@ class ExprNode: public AstNode {
 
   void print(ostream& os, int indent=0) const=0;
   void typePrint(ostream& os, int indent=0) const=0;
+  vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel) { return NULL; }
+  vector<Instruction*>* codeGen() { return NULL; }
 
  private:
   ExprNodeType exprType_;
@@ -318,6 +320,8 @@ class BasePatNode: public AstNode {
   virtual bool isNegatable() const {
     return ((!hasSeqOps()) && (!hasNeg())); }
 
+  virtual vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel) { return NULL; };
+
  private:
   PatNodeKind patKind_;
   BasePatNode* parent_;
@@ -353,6 +357,7 @@ class PrimitivePatNode: public BasePatNode {
     return (list<const OpNode*>&)asgs_; }
   list<OpNode*>& asgs() { return asgs_; }
 
+
   bool hasSeqOps() const;
   bool hasNeg() const;
   bool hasAnyOrOther() const;
@@ -360,6 +365,7 @@ class PrimitivePatNode: public BasePatNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel);
 
  private:
 
@@ -420,6 +426,8 @@ class StmtNode: public AstNode {
   void print(ostream& os, int indent) const = 0;
   void typePrint(ostream& os, int indent) const = 0;
   const Type* typeCheck() = 0;
+  vector<Instruction*>* codeGen(Label* currLabel) { return NULL;}
+  vector<Instruction*>* codeGen() { return NULL;}
  private:
   StmtNodeKind skind_;
 };
@@ -442,6 +450,7 @@ class ReturnStmtNode: public StmtNode {
       if(expr_ != NULL) expr_->typePrint(os, indent); else os << "NULL";};
 
   const Type* typeCheck();
+  vector<Instruction*>* codeGen() { return NULL;}
 
  private:
   ExprNode* expr_;
@@ -468,6 +477,7 @@ class ExprStmtNode: public StmtNode {
     }
   };
   const Type* typeCheck();
+  vector<Instruction*>* codeGen() { return NULL;}
 
  private:
   ExprNode* expr_;
@@ -493,6 +503,7 @@ class CompoundStmtNode: public StmtNode{
   void  print(ostream& os, int indent) const;
   void  typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
+  vector<Instruction*>* codeGen() { return NULL;}
 
  private:
   CompoundStmtNode(const CompoundStmtNode&);
@@ -522,6 +533,7 @@ class IfNode: public StmtNode{
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
+  vector<Instruction*>* codeGen() { return NULL;}
 
  private:
   ExprNode *cond_;
@@ -552,6 +564,7 @@ class RuleNode: public AstNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel);
 
  private:
   BlockEntry    *rste_;
