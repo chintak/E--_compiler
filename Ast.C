@@ -1223,12 +1223,16 @@ OpNode::codeGen() {
 		RefExprNode* ref = (RefExprNode*) arg_[0];
 		VariableEntry* ve = (VariableEntry*) ref->symTabEntry();
 		const Constant* c = new Constant(new Value(ve->offSet(), Type::INT));
-		ic = Instruction::Icode::MOVI;
-		ics->push_back(
-			new Instruction(ic, c, NULL, a1, NULL));
-		ic = Instruction::Icode::ADD;
-		ics->push_back(
-			new Instruction(ic, a1, BP(), a1));
+		if (ve->varKind() == VariableEntry::VarKind::GLOBAL_VAR) {
+			a1 = c;
+		} else {
+			ic = Instruction::Icode::MOVI;
+			ics->push_back(
+				new Instruction(ic, c, NULL, a1, NULL));
+			ic = Instruction::Icode::ADD;
+			ics->push_back(
+				new Instruction(ic, a1, BP(), a1));
+		}
 	} else {
 		ics = arg_[0]->codeGen();
 		a1 = arg_[0]->rVal();
@@ -1247,9 +1251,8 @@ OpNode::codeGen() {
 	Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
 	switch (opCode_) {
 			case OpCode::ASSIGN:
-				a1 = lVal();
 				if (!a1) cout << line() << ":" << "lval null\n";
-				ic = ((((Register*)a1)->regKind() == Register::INT) ?
+				ic = ((a1->typeTag() == Type::INT) ?
 						Instruction::STI : Instruction::STF);
 				ics->push_back(new Instruction(ic, a2, NULL, a1, NULL));
 				break;
@@ -1403,7 +1406,7 @@ ReturnStmtNode::codeGen() {
 
 vector<Instruction*>*
 ExprStmtNode::codeGen(Label* endLabel) {
-	return expr()->codeGen(endLabel);
+	return expr()->codeGen();
 }
 
 
@@ -1464,7 +1467,7 @@ IfNode::codeGen(Label *endlbl) {
 	vector<Instruction*>* ics = NULL, *ics1 = NULL;
 	ics = cond()->codeGen(thenlbl);
 	if (elseStmt()) {
-		ics1 = elseStmt()->codeGen();
+		ics1 = elseStmt()->codeGen(NULL);
 		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
 		else if (ics1) ics = ics1;
 		ics->push_back(new Instruction(Instruction::JMP, endlbl));
