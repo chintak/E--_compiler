@@ -1074,7 +1074,15 @@ WhileStmtNode::typeCheck() {
 
 void
 RefExprNode::memAlloc() {
-	rVal(MemAlloc::get_next_reg(type()));
+	const Type* rT = type();
+	const Type* cT = coercedType();
+
+	unCoercedVal(MemAlloc::get_next_reg(rT));
+	rVal(unCoercedVal());
+	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
+		unCoercedVal(MemAlloc::get_next_reg(rT));
+		rVal(MemAlloc::get_next_reg(cT));
+	}
 }
 
 void
@@ -1122,12 +1130,20 @@ ValueNode::codeGen() {
 
 vector<Instruction*>*
 RefExprNode::codeGen() {
+	const Type* cT = coercedType();
+	const Type* rT = type();
 	vector<Instruction*>* ics = icode();
 	VariableEntry* ve = (VariableEntry*) symTabEntry();
 	const Arg* l = ve->lVal();
+	const Arg* u = unCoercedVal();
 	const Arg* r = rVal();
 	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
-	ics->push_back(new Instruction(ic, l, NULL, r, NULL));
+	ics->push_back(new Instruction(ic, l, NULL, u, NULL));
+
+	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
+		ic = (Type::isFloat(cT->tag())) ? Instruction::MOVIF : Instruction::MOVFI;
+		ics->push_back(new Instruction(ic, u, NULL, r, NULL));
+	}
 	return ics;
 }
 
