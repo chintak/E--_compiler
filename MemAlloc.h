@@ -19,8 +19,8 @@ ROO1 SP
 
 using namespace std;
 
-Register* BP();
-Register* SP();
+const Register* BP();
+const Register* SP();
 
 class MemAlloc {
 public:

@@ -11,6 +11,13 @@ int MemAlloc::iRegNum(0),
 	MemAlloc::tempNum(0),
 	MemAlloc::globalOffset(GLOBAL_OFFSET_LOC);
 
+Register* MemAlloc::BP_ = MemAlloc::get_next_reg(
+	"BP", Type::type[Type::INT]);
+Register* MemAlloc::SP_ = MemAlloc::get_next_reg(
+	"SP", Type::type[Type::INT]);
+
+const Register* BP() { return (const Register*) MemAlloc::BP_; }
+const Register* SP() { return (const Register*) MemAlloc::SP_; }
 
 Register* MemAlloc::get_next_reg(string vName, const Type* t) {
 	Register* r = NULL;
@@ -47,11 +54,4 @@ Register* MemAlloc::get_next_freg() {
 	return new FReg(fRegNum++);
 }
 
-Register* MemAlloc::BP_ = MemAlloc::get_next_reg(
-	string("BP"), Type::type[Type::INT]);
-Register* MemAlloc::SP_ = MemAlloc::get_next_reg(
-	"SP", Type::type[Type::INT]);
-
-Register* BP() { return MemAlloc::BP_; }
-Register* SP() { return MemAlloc::SP_; }
 
