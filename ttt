@@ -1,0 +1,48 @@
+
+
+event e(int f);
+int y = 2;
+int a;
+int b = 10;
+int d = b + (-b);
+int c = b & d;
+
+/*
+void f(int i) {
+    i = i + 10;
+}
+    i = 1;
+double x = 2.4 + b;
+unsigned int ui = 1;
+int f = ui + 0.9;
+double c = b + 2 + 3.13;
+double e = b + 2 + 3.13;
+double f = 123.12;
+
+event o(string a1 , int a2 , unsigned int a3);
+bool d=false;
+
+unsigned int y;
+string s2;
+
+class CString;
+CString cs;
+
+int g(int a, int b, double x);
+
+double f(string s1, CString s2);
+
+open(file, flags, mode) -> {
+       g(b,c,y);
+       f(s2, cs);
+
+   g(0.5, y, d);
+   f(cs, s2);
+};
+
+    f(flag);
+*/
+e(flag) -> {
+    a = 10;
+
+};

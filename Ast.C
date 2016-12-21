@@ -1416,15 +1416,19 @@ CompoundStmtNode::codeGen(Label* currLabel) {
 
 	const list<StmtNode*>* stmtList = stmts();
 	vector<Instruction*>* instr_set_stmt;
-	Label* endLab;
+	Label* endLabPrev=NULL, *endLabCur=NULL;
 	for (auto it = stmtList->begin(); it != stmtList->end(); ++it) {
 		if (((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::EXPR) ||
 			((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::IF)) {
-			endLab = LabelGenerator::getLabel();
-			instr_set_stmt = (*it)->codeGen(endLab);
+			endLabCur = LabelGenerator::getLabel();
+			instr_set_stmt = (*it)->codeGen(endLabCur);
 		} else {
 			instr_set_stmt = (*it)->codeGen();
+			endLabCur = NULL;
 		}
+		if (endLabPrev && instr_set_stmt)
+			(*instr_set_stmt)[0]->setLabel(endLabPrev);
+		endLabPrev = endLabCur;
 		instr_set->insert(instr_set->end(), instr_set_stmt->begin(), instr_set_stmt->end());
 	}
 
@@ -1488,7 +1492,7 @@ OpNode::codeGen(Label *lbl) {
 	}
 	// perform the actual operation
 	if (!ics) ics = new vector<Instruction*>;
-	Type::TypeTag rT = type()->tag();
+	Type::TypeTag rT = arg_[0]->type()->tag();
 	Instruction::Icode ic;
 	switch (opCode_) {
 			case OpCode::GT:
