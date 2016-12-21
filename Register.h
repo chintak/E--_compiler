@@ -101,7 +101,11 @@ public:
 
 private:
     void print(ostream& os, int indent) const {
-        val_->print(os, indent);
+		if (Type::isBool(val_->type()->tag())) {
+			cout << (val_->bval() ? 1: 0);
+		} else {
+				val_->print(os, indent);
+		}
     }
     const Value* val_;
 };
@@ -114,9 +118,20 @@ public:
     void print(ostream& os, int indent) const {
         os << name();
     }
+    Type::TypeTag typeTag() const {
+        return Type::STRING; 
+    }
+	static char *newlbl() {
+			static int c;
+			static char s[16];
+
+			sprintf(s, "L%d", c++);
+			return s;
+	}
 
 private:
-    string lab_;
+	string lab_;
 };
+
 
 #endif

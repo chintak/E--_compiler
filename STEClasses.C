@@ -374,11 +374,20 @@ GlobalEntry::codeGen() {
 	}
 
 	if (instr_set)
-		for (unsigned int i = 0; i < instr_set->size(); i++) {
-				(*instr_set)[i]->print(cout, 0);
-				cout << "\n";
-		}
-
+			for (unsigned int i = 0; i < instr_set->size(); i++) {
+					(*instr_set)[i]->print(cout, 0);
+					cout << "\n";
+			}
+#if 0
+	for (unsigned int i = 0; i < rules_.size(); i++) {
+			rules_[i]->codeGen();
+	}
+	if (instr_set)
+			for (unsigned int i = 0; i < instr_set->size(); i++) {
+					(*instr_set)[i]->print(cout, 0);
+					cout << "\n";
+			}
+#endif
 	return instr_set;
 }
 

@@ -52,7 +52,15 @@ public:
 		STF,
 		IN,
 		INI,
-		INF
+		INF,
+		JMP_GT,
+		JMP_FGT,
+		JMP_GE,
+		JMP_FGE,
+		JMP_EQ,
+		JMP_FEQ,
+		JMP_NE,
+		JMP_FNE
 	};
 	Instruction() {}
 	Instruction(Icode o, const Arg* a1, const Arg* a2=NULL, const Arg* r=NULL, const Label* l=NULL) :

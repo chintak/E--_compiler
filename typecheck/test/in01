@@ -16,23 +16,17 @@
     
     unsigned int uk=-1;
 
-/*
-    bool b1=true;
-    bool b2=false;
-*/
     double c=0.1;
-/*    double d=i; */
-    /* double e=b1; */
 
-    byte b ;
-/*
-    string s="aaaa";
-*/  
-  /* string ss=i; */	 
-
-  /*  string file; */
+    byte b = i;
+    int f=2+(-i);   
+    int k = (23 * (-i)/j);
     int flags;     
-    
+    double x=2.4-i;
+    int d=ui+0.9;
+	int ii = k%2;
+	double dx = i+j + 0.89; 
+
     unsigned int mode;	
 
     open(file, flags, mode) -> {
