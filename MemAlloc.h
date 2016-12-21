@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <map>
 #include "Register.h"
 #include "Type.h"
 
@@ -25,17 +26,20 @@ class MemAlloc {
 public:
     MemAlloc() {}
     ~MemAlloc();
-
     // Get the next register
-    static Register* get_next_ireg();
-    static Register* get_next_freg();
-    static Register* get_next_reg(const Type* t);
-    // TODO: stack get next offset allocator method
-    // TODO: global next offset allocator method
+    static Register* get_next_reg(string vName, const Type* t);
+    static Register* get_next_temp_reg(const Type* t);
+
+    static map<Register*, string> regToVarMap;
+    static map<string, Register*> varToRegMap;
 
 private:
+    static Register* get_next_ireg();
+    static Register* get_next_freg();
+
     static int iRegNum;
     static int fRegNum;
+    static int tempNum;
     static int globalOffset;
 };
 

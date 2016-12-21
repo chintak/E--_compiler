@@ -1077,17 +1077,17 @@ RefExprNode::memAlloc() {
 	const Type* rT = type();
 	const Type* cT = coercedType();
 
-	unCoercedVal(MemAlloc::get_next_reg(rT));
+	unCoercedVal(MemAlloc::get_next_temp_reg(rT));
 	rVal(unCoercedVal());
 	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
-		unCoercedVal(MemAlloc::get_next_reg(rT));
-		rVal(MemAlloc::get_next_reg(cT));
+		unCoercedVal(MemAlloc::get_next_temp_reg(rT));
+		rVal(MemAlloc::get_next_temp_reg(cT));
 	}
 }
 
 void
 ValueNode::memAlloc() {
-	rVal(MemAlloc::get_next_reg(type()));
+	rVal(MemAlloc::get_next_temp_reg(type()));
 }
 
 void
@@ -1101,12 +1101,12 @@ OpNode::memAlloc() {
 
 	// allocate register for result
 	if (cT && Type::isCoerce(t->tag(), cT->tag())) {
-		unCoercedVal(MemAlloc::get_next_reg(t));
-		rVal(MemAlloc::get_next_reg(cT));
+		unCoercedVal(MemAlloc::get_next_temp_reg(t));
+		rVal(MemAlloc::get_next_temp_reg(cT));
 		// cout << "malloc: OP: " << rVal()->name() << endl;
 		// cout << "malloc: OP: " << unCoercedVal()->name() << endl;
 	} else {
-		unCoercedVal(MemAlloc::get_next_reg(t));
+		unCoercedVal(MemAlloc::get_next_temp_reg(t));
 		rVal(unCoercedVal());
 		// cout << "malloc: OP: " << unCoercedVal()->name() << endl;
 	}

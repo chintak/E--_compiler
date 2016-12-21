@@ -257,7 +257,7 @@ void
 VariableEntry::memAlloc() {
 	if (initVal()) {
 		if (vkind_ == VariableEntry::LOCAL_VAR) {
-			lVal_ = MemAlloc::get_next_reg(type());
+			lVal_ = MemAlloc::get_next_reg(name(), type());
 			// cout << "malloc: " << ((Register*) lVal_)->name() << " to " << name() << endl;
 		}
 		initVal()->memAlloc();  // allocate regs for computing rhs
