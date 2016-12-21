@@ -1203,22 +1203,22 @@ PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
 	vector<VariableEntry*>::iterator it1;
 	vector<Type*>::iterator it2;
 
-	Register * r = MemAlloc::get_next_ireg();
+	Register * r = MemAlloc::get_next_temp_reg(&Type::intType);
 	instr_set->push_back(new Instruction(Instruction::Icode::IN, r));
 
 
 	for (it2 = argTypes->begin(), it1 = args->begin(); it2 != argTypes->end(); ++it1, ++it2)
 	{
 		VariableEntry* ve = (*it1);
-		const Register* r = ve->lVal();
+		const Arg* argReg = ve->lVal();
 
 		if ((*it2)->tag() != Type::TypeTag::INT)
 		{
-			instr_set->push_back(new Instruction(Instruction::Icode::INI, r));
+			instr_set->push_back(new Instruction(Instruction::Icode::INI, argReg));
 		}
 		else if ((*it2)->tag() != Type::TypeTag::DOUBLE)
 		{
-			instr_set->push_back(new Instruction(Instruction::Icode::INF, r));
+			instr_set->push_back(new Instruction(Instruction::Icode::INF, argReg));
 		}
 	}
 

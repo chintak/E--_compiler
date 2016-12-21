@@ -19,7 +19,7 @@ public:
     Arg() {}
     Arg(ArgKind a) { argKind_ = a; }
     ~Arg() {}
-    virtual Type::TypeTag typeTag() const=0;
+    virtual Type::TypeTag typeTag() const { return Type::VOID; }
     ArgKind argKind() { return argKind_; }
     void argKind(ArgKind a) { argKind_ = a; }
     virtual void print(ostream& os, int indent) const=0;

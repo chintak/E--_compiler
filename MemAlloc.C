@@ -1,4 +1,7 @@
 #include "MemAlloc.h"
+#include <iostream>
+
+using namespace std;
 
 map<Register*, string> MemAlloc::regToVarMap;
 map<string, Register*> MemAlloc::varToRegMap;
@@ -8,13 +11,6 @@ int MemAlloc::iRegNum(0),
 	MemAlloc::tempNum(0),
 	MemAlloc::globalOffset(GLOBAL_OFFSET_LOC);
 
-static const Register* BP_ = MemAlloc::get_next_reg(
-	string("BP"), Type::type[Type::INT]);
-static const Register* SP_ = MemAlloc::get_next_reg(
-	"SP", Type::type[Type::INT]);
-
-const Register* BP() { return BP_; }
-const Register* SP() { return SP_; }
 
 Register* MemAlloc::get_next_reg(string vName, const Type* t) {
 	Register* r = NULL;
@@ -50,4 +46,12 @@ Register* MemAlloc::get_next_freg() {
 	}
 	return new FReg(fRegNum++);
 }
+
+Register* MemAlloc::BP_ = MemAlloc::get_next_reg(
+	string("BP"), Type::type[Type::INT]);
+Register* MemAlloc::SP_ = MemAlloc::get_next_reg(
+	"SP", Type::type[Type::INT]);
+
+Register* BP() { return MemAlloc::BP_; }
+Register* SP() { return MemAlloc::SP_; }
 

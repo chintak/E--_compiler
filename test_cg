@@ -1,10 +1,10 @@
-double x = 6.0;
-void g() {
+int x = 6;
+void g(int a) {
 int a1, a2;
-a1=1;
+a1=a+a1;
 };
 
 any -> {
-        g();
+        g(x);
 } ;
 

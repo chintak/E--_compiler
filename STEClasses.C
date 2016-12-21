@@ -297,6 +297,7 @@ vector<Instruction*>*
 GlobalEntry::codeGen() {
 	SymTab* st = symTab();
 	VariableEntry* ve;
+	FunctionEntry* fe;
 	SymTab::iterator it = NULL;
 	vector<Instruction*>* ics = NULL, *instr_set = NULL;
 
@@ -312,6 +313,15 @@ GlobalEntry::codeGen() {
 				}
 			}
 		}
+		if ((*it)->kind() == SymTabEntry::Kind::FUNCTION_KIND) {
+			fe = (FunctionEntry *)(*it);
+			ics = fe->codeGen();
+			if (ics) {
+				if (instr_set)
+					instr_set->insert(instr_set->end(), ics->begin(), ics->end());
+				else instr_set = ics;
+			}
+		}
 	}
 
 	if (rules_.size() != 0) {
@@ -321,7 +331,7 @@ GlobalEntry::codeGen() {
         for(vector<RuleNode*>::const_iterator it = rules_.begin(); it != rules_.end(); ++it) {
         	count++;
             Label* nextlabel = new Label(label + to_string(count));
-            (*it)->codeGen(currlabel,nextlabel);
+            // (*it)->codeGen(currlabel,nextlabel);
             currlabel = nextlabel;
         }
     }
@@ -414,17 +424,38 @@ FunctionEntry::codeGen() {
 	if (body() != NULL)
 	{
 		// set BP = SP
+		if (SP())
+			cout << "\nSP is not null\n";
+		else
+			cout << "\nSP is null\n";
+
+		if (MemAlloc::SP_)
+			cout << "\nSP in memAlloc is not null\n";
+		else
+			cout << "\nSP in memAlloc is null\n";
+
+		if (BP())
+			cout << "\nBP is not null\n";
+		else
+			cout << "\nBP is null\n";
+
+
 		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,SP(),BP()));
+		// cout << "\n1\n";
 		
 		// alloc space for ret val
 		const Value* v1 = new Value(1, Type::TypeTag::UINT);
 		Constant* incr1 = new Constant(v1);
+		// cout << "\n2\n";
 		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,BP()));
+		// cout << "\n3\n";
 		instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,BP()));
+		// cout << "\n4\n";
 
 		// process instructions in the body
-		vector<Instruction*>* instr_set_body = body()->codeGen();
-		instr_set->insert(instr_set->end(), instr_set_body->begin(), instr_set_body->end());
+
+		// vector<Instruction*>* instr_set_body = body()->codeGen();
+		// instr_set->insert(instr_set->end(), instr_set_body->begin(), instr_set_body->end());
 		
 		// pop stack uptil bp and set sp
 		const Value* v2 = new Value(2, Type::UINT);
@@ -433,7 +464,8 @@ FunctionEntry::codeGen() {
 		instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr2,SP()));
 
 		// jump to ret.addr
-		Register* r1 = MemAlloc::get_next_ireg();
+
+		Register* r1 = MemAlloc::get_next_temp_reg(&Type::intType);
 		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr2,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));
@@ -444,7 +476,7 @@ FunctionEntry::codeGen() {
 		// jump back to ret_addr
 		const Value* v1 = new Value(1, Type::UINT);
 		Constant* incr1 = new Constant(v1);
-		Register* r1 = MemAlloc::get_next_ireg();
+		Register* r1 = MemAlloc::get_next_temp_reg(&Type::intType);
 		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr1,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));

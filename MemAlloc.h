@@ -19,8 +19,8 @@ ROO1 SP
 
 using namespace std;
 
-const Register* BP();
-const Register* SP();
+Register* BP();
+Register* SP();
 
 class MemAlloc {
 public:
@@ -32,10 +32,13 @@ public:
 
     static map<Register*, string> regToVarMap;
     static map<string, Register*> varToRegMap;
+    static Register* BP_;
+    static Register* SP_;
 
 private:
     static Register* get_next_ireg();
     static Register* get_next_freg();
+
 
     static int iRegNum;
     static int fRegNum;
