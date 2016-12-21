@@ -1154,12 +1154,12 @@ RefExprNode::codeGen() {
 vector<Instruction*>*
 OpNode::codeGen() {
 	vector<Instruction*>* ics = NULL, *ics1 = NULL;
+	ics = arg_[0]->codeGen();
 	const Arg* a1 = arg_[0]->rVal();
 	const Arg* a2 = NULL;
-	ics = arg_[0]->codeGen();
 	if (arity_ == 2) {
-		a2 = arg_[1]->rVal();
 		ics1 = arg_[1]->codeGen();
+		a2 = arg_[1]->rVal();
 		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
 		else if (ics1) ics = ics1;
 	}
