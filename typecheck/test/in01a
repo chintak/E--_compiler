@@ -19,14 +19,15 @@
     CStr cs3=cs2;
 	
     bool a,c=false;
-*/ 
     double x=i, d=a;
+*/ 
 
     byte b=i;
 /*
     string s ;
  */  
-    int f=2+i;   
+    int f=2+(-i);   
+    int k = (23 * (-i)/j);
  
     int flags;     
     

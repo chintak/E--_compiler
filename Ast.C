@@ -1096,6 +1096,9 @@ OpNode::memAlloc() {
 	const Type* t = type();
 
 	arg_[0]->memAlloc();
+	if (opCode_ == OpCode::UMINUS)
+		return;
+
 	if (arity_ == 2)
 		arg_[1]->memAlloc();
 
@@ -1116,16 +1119,16 @@ OpNode::memAlloc() {
 
 vector<Instruction*>*
 ValueNode::codeGen() {
-	vector<Instruction*>* ics = icode();
-	const Constant* v = new Constant(value());
-	const Register* r = (const Register*) rVal();
-	Instruction::Icode i_code;
-	if (r->regKind() == Register::RegKind::INT)
-		i_code = Instruction::Icode::MOVI;
-	else
-		i_code = Instruction::Icode::MOVF;
-	ics->push_back(new Instruction(i_code, v, NULL, r, NULL));
-	return ics;
+		vector<Instruction*>* ics = icode();
+		const Constant* v = new Constant(value());
+		const Register* r = (const Register*) rVal();
+		Instruction::Icode i_code;
+		if (r->regKind() == Register::RegKind::INT)
+				i_code = Instruction::Icode::MOVI;
+		else
+				i_code = Instruction::Icode::MOVF;
+		ics->push_back(new Instruction(i_code, v, NULL, r, NULL));
+		return ics;
 }
 
 vector<Instruction*>*
@@ -1152,21 +1155,22 @@ vector<Instruction*>*
 OpNode::codeGen() {
 	vector<Instruction*>* ics = NULL, *ics1 = NULL;
 	const Arg* a1 = arg_[0]->rVal();
+	const Arg* a2 = NULL;
 	ics = arg_[0]->codeGen();
 	if (arity_ == 2) {
-		const Arg* a2 = arg_[1]->rVal();
+		a2 = arg_[1]->rVal();
 		ics1 = arg_[1]->codeGen();
 		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
 		else if (ics1) ics = ics1;
-
-		// perform the actual operation
-		if (!ics) ics = new vector<Instruction*>;
-		const Arg* u = unCoercedVal();
-		const Arg* r = rVal();
-		Type::TypeTag rT = type()->tag();
-		Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
-		Instruction::Icode ic;
-		switch (opCode_) {
+	}
+	// perform the actual operation
+	if (!ics) ics = new vector<Instruction*>;
+	const Arg* u = unCoercedVal();
+	const Arg* r = rVal();
+	Type::TypeTag rT = type()->tag();
+	Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
+	Instruction::Icode ic;
+	switch (opCode_) {
 			case OpCode::PLUS:
 				ic = (Type::isIntegral(rT)) ? Instruction::ADD : Instruction::FADD;
 				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
@@ -1183,12 +1187,17 @@ OpNode::codeGen() {
 				ic = (Type::isIntegral(rT)) ? Instruction::DIV: Instruction::FDIV;
 				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
 				break;
+			case OpCode::UMINUS:
+				//arg_[0]->rVal(a1);
+				rVal(a1);
+				ic = (Type::isIntegral(rT)) ? Instruction::NEG: Instruction::FNEG;
+				ics->push_back(new Instruction(ic, a1, a2, a1, NULL));
+				break;
 			default:;
-		}
-		if (Type::isCoerce(rT, cT)) {
+	}
+	if (Type::isCoerce(rT, cT)) {
 			ic = (Type::isFloat(cT)) ? Instruction::MOVIF : Instruction::MOVFI;
 			ics->push_back(new Instruction(ic, u, NULL, r, NULL));
-		}
 	}
 	icode(ics);
 	return ics;
