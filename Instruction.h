@@ -59,6 +59,7 @@ public:
 		icode_(o), arg1_(a1), arg2_(a2), res_(r), lbl_(l) {}
 	~Instruction();
 	void print(ostream& os, int indent);
+	void setLabel(Label* l) { lbl_ = l; }
 
 	static const string icode[];  // contains the mapping from Icode enum to actual instruction name in string
 

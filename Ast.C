@@ -921,6 +921,7 @@ InvocationNode::typeCheck() {
 
 const Type*
 ExprStmtNode::typeCheck() {
+	if (!expr_) return Type::type[Type::ERROR];
 	if (expr_->typeCheck()->tag() == Type::ERROR) {
 		return Type::type[Type::ERROR];
 	}
@@ -1080,6 +1081,7 @@ RefExprNode::memAlloc() {
 
 	unCoercedVal(MemAlloc::get_next_temp_reg(rT));
 	rVal(unCoercedVal());
+	lVal(((VariableEntry*) symTabEntry())->lVal());
 	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
 		unCoercedVal(MemAlloc::get_next_temp_reg(rT));
 		rVal(MemAlloc::get_next_temp_reg(cT));
@@ -1103,6 +1105,13 @@ OpNode::memAlloc() {
 	if (arity_ == 2)
 		arg_[1]->memAlloc();
 
+	if (opCode_ == OpCode::ASSIGN) {
+		VariableEntry* ve = (VariableEntry*)((RefExprNode*) arg_[0])->symTabEntry();
+		lVal(ve->lVal());
+		if (!lVal()) cout << "lVal assign null\n";
+		return;
+	}
+
 	// allocate register for result
 	if (cT && Type::isCoerce(t->tag(), cT->tag())) {
 		unCoercedVal(MemAlloc::get_next_temp_reg(t));
@@ -1116,6 +1125,46 @@ OpNode::memAlloc() {
 	}
 }
 
+void
+InvocationNode::memAlloc() {
+	vector<ExprNode*>* args = params();
+	for (auto it = args->begin(); it != args->end(); ++it) {
+		(*it)->memAlloc();
+	}
+}
+
+void RuleNode::memAlloc() {
+	pat()->memAlloc();
+	if (reaction()) reaction()->memAlloc();
+}
+
+void
+PrimitivePatNode::memAlloc() {
+	// allocate registers for storing the arguments
+	argRegs_ = new vector<const Arg*>();
+	vector<VariableEntry*>* argTypes = params();
+	int paramOffset = 0;
+	if (argTypes) { // no need to allocate regs
+		vector<VariableEntry*>::iterator it2;
+		const Type* t = NULL;
+		for (it2 = argTypes->begin(); it2 != argTypes->end(); ++it2) {
+			(*it2)->offSet(paramOffset--);
+			(*it2)->memAlloc();
+			t = (*it2)->type();
+			argRegs_->push_back(MemAlloc::get_next_reg((*it2)->name(), t));
+		}
+		if (cond()) cond()->memAlloc();
+	}
+}
+
+void
+CompoundStmtNode::memAlloc() {
+	const list<StmtNode*>* stmtList = stmts();
+	for (auto it = stmtList->begin(); it != stmtList->end(); ++it) {
+		(*it)->memAlloc();
+	}
+}
+
 /************** Code Gen *******************/
 
 vector<Instruction*>*
@@ -1124,27 +1173,13 @@ ValueNode::codeGen() {
 		const Constant* v = new Constant(value());
 		const Register* r = (const Register*) rVal();
 		Instruction::Icode i_code;
-		if (ics)
-			cout << "ics not NULL\n";
-		else
-			cout << "ics is NULL!!\n";
-		if (!r)
-			cout << "r is NULL\n";
-		if (r->regKind() == Register::RegKind::INT)
-		{
-				cout << "movi instr\n";
+		if (!r) cout << "ValueNode rVal is null\n";
+		if (r->regKind() == Register::RegKind::INT) {
 				i_code = Instruction::Icode::MOVI;
-				cout << "movi instr ended\n";
-		}
-		else
-		{
-			cout << "movf instr \n";
+		} else {
 			i_code = Instruction::Icode::MOVF;
-			cout << "movf instr ended\n";
 		}
-		cout << "push to ics\n";
 		ics->push_back(new Instruction(i_code, v, NULL, r, NULL));
-		cout << "pushed to ics\n";
 		return ics;
 }
 
@@ -1157,7 +1192,8 @@ RefExprNode::codeGen() {
 	const Arg* l = ve->lVal();
 	const Arg* u = unCoercedVal();
 	const Arg* r = rVal();
-cout << line()<<endl;
+
+	if (!l) {cout << "RefExprNode lval null\n"; return NULL;}
 	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
 	ics->push_back(new Instruction(ic, l, NULL, u, NULL));
 
@@ -1170,11 +1206,26 @@ cout << line()<<endl;
 
 
 vector<Instruction*>*
-OpNode::codeGen() {
-	vector<Instruction*>* ics = NULL, *ics1 = NULL;
-	ics = arg_[0]->codeGen();
-	const Arg* a1 = arg_[0]->rVal();
+OpNode::codeGen(Label* endLabel) {
+	vector<Instruction*>* ics = icode(), *ics1 = NULL;
+	const Arg* a1 = NULL;
 	const Arg* a2 = NULL;
+	Instruction::Icode ic;
+	if (opCode_ == OpCode::ASSIGN) {
+		a1 = arg_[0]->lVal();
+		RefExprNode* ref = (RefExprNode*) arg_[0];
+		VariableEntry* ve = (VariableEntry*) ref->symTabEntry();
+		const Constant* c = new Constant(new Value(ve->offSet(), Type::INT));
+		ic = Instruction::Icode::MOVI;
+		ics->push_back(
+			new Instruction(ic, c, NULL, a1, NULL));
+		ic = Instruction::Icode::ADD;
+		ics->push_back(
+			new Instruction(ic, a1, BP(), a1));
+	} else {
+		ics = arg_[0]->codeGen();
+		a1 = arg_[0]->rVal();
+	}
 	if (arity_ == 2) {
 		ics1 = arg_[1]->codeGen();
 		a2 = arg_[1]->rVal();
@@ -1187,8 +1238,14 @@ OpNode::codeGen() {
 	const Arg* r = rVal();
 	Type::TypeTag rT = type()->tag();
 	Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
-	Instruction::Icode ic;
 	switch (opCode_) {
+			case OpCode::ASSIGN:
+				a1 = lVal();
+				if (!a1) cout << line() << ":" << "lval null\n";
+				ic = ((((Register*)a1)->regKind() == Register::INT) ?
+						Instruction::STI : Instruction::STF);
+				ics->push_back(new Instruction(ic, a2, NULL, a1, NULL));
+				break;
 			case OpCode::PLUS:
 				ic = (Type::isIntegral(rT)) ? Instruction::ADD : Instruction::FADD;
 				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
@@ -1235,47 +1292,51 @@ OpNode::codeGen() {
 
 vector<Instruction*>*
 RuleNode::codeGen(Label* currLabel, Label* nextlabel) {
-
 	vector<Instruction*>* instr_set = pat()->codeGen(currLabel, nextlabel);
 	vector<Instruction*>* instr_set_reaction = reaction()->codeGen(currLabel);
-	instr_set->insert(instr_set->end(), instr_set_reaction->begin(), instr_set_reaction->end());
+	cout << "rule here\n";
+	if (instr_set_reaction)
+		instr_set->insert(instr_set->end(), instr_set_reaction->begin(), instr_set_reaction->end());
 	return instr_set;
 }
 
 vector<Instruction*>*
 PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
-
-	vector<Instruction*>* instr_set = new vector<Instruction*>();
-
-	EventEntry *ee = event();
-	
-	vector<Type*>* argTypes = ee->type()->argTypes();
-	vector<VariableEntry*>* args = params();
-	
-	vector<VariableEntry*>::iterator it1;
-	vector<Type*>::iterator it2;
-
+	vector<Instruction*>* instr_set = icode();
 	Register * r = MemAlloc::get_next_temp_reg(&Type::intType);
 	instr_set->push_back(new Instruction(Instruction::Icode::IN, r));
 
+	vector<const Arg*>* argRegs = argRegs_;
+	vector<VariableEntry*>* vars = params();
+	Arg* aReg = NULL;
+	vector<const Arg*>::iterator it;
+	vector<VariableEntry*>::iterator it2;
 
-	for (it2 = argTypes->begin(), it1 = args->begin(); it2 != argTypes->end(); ++it1, ++it2)
-	{
-		VariableEntry* ve = (*it1);
-		const Arg* argReg = ve->lVal();
-
-		if ((*it2)->tag() != Type::TypeTag::INT)
-		{
-			instr_set->push_back(new Instruction(Instruction::Icode::INI, argReg));
-		}
-		else if ((*it2)->tag() != Type::TypeTag::DOUBLE)
-		{
-			instr_set->push_back(new Instruction(Instruction::Icode::INF, argReg));
+	for (it = argRegs->begin(), it2 = vars->begin();
+		 it != argRegs->end() && it2 != vars->end(); ++it, ++it2) {
+		aReg = (Arg*) (*it);
+		if (aReg->argKind() == Arg::REGISTER) {
+			const Arg* l = (*it2)->lVal();
+			const Constant* c = new Constant(new Value((*it2)->offSet(), Type::INT));
+			instr_set->push_back(
+				new Instruction(Instruction::Icode::MOVI, c, NULL, l, NULL));
+			instr_set->push_back(
+				new Instruction(Instruction::Icode::ADD, l, SP(), l));
+			if (((Register*) aReg)->regKind() == Register::INT) {
+				instr_set->push_back(
+					new Instruction(Instruction::Icode::INI, aReg, NULL));
+				instr_set->push_back(
+					new Instruction(Instruction::Icode::STI, aReg, NULL, l));
+			} else {
+				instr_set->push_back(
+					new Instruction(Instruction::Icode::INF, aReg, NULL));
+				instr_set->push_back(
+					new Instruction(Instruction::Icode::STF, aReg, NULL));
+			}
 		}
 	}
 
-	if (cond())
-	{
+	if (cond()) {
 		vector<Instruction*>* instr_set_cond = cond()->codeGen(currLabel,nextlabel);
 		instr_set->insert(instr_set->end(), instr_set_cond->begin(), instr_set_cond->end());
 	}
@@ -1283,32 +1344,34 @@ PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
 }
 
 vector<Instruction*>*
-InvocationNode::codeGen() {
-
-	vector<Instruction*>* instr_set = new vector<Instruction*>();
+InvocationNode::codeGen(Label* endLabel) {
+	vector<Instruction*>* instr_set = icode();
+	return instr_set; // TODO: integrate with Ubaid
 	FunctionEntry* fe = (FunctionEntry*) symTabEntry();
 	Label* l = fe->label();
 	vector<ExprNode*>* args = params();
-	const vector<Type*> *argTypes = type()->argTypes();
-	auto it1 = args->begin();
-	
+	// if (!type()) cout << "InvocationNode type null\n";
+	vector<Type*>* argTypes = (vector<Type*>*) fe->type()->argTypes();
+	vector<Type*>::reverse_iterator it;
+	vector<ExprNode*>::reverse_iterator it1;
+
 	const Value* v1 = new Value(1, Type::TypeTag::UINT);
 	Constant* incr1 = new Constant(v1);
-	
-	for (auto it = argTypes->begin(); it != argTypes->end(); ++it,++it1)
+
+	for (it = argTypes->rbegin(), it1 = args->rbegin();
+		 it != argTypes->rend() && it1 != args->rend(); ++it, ++it1)
 	{
-		if ((*it)->tag() == Type::TypeTag::INT)
-		{
+		if (!(*it)) cout << "inv node arg null\n";
+		if ((*it)->tag() == Type::TypeTag::INT) {
 			instr_set->push_back(new Instruction(Instruction::Icode::STI,(*it1)->rVal(),SP()));
 		}
-		else if ((*it)->tag() == Type::TypeTag::DOUBLE)
-		{
+		else if ((*it)->tag() == Type::TypeTag::DOUBLE) {
 			instr_set->push_back(new Instruction(Instruction::Icode::STF,(*it1)->rVal(),SP()));
 		}
-		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr1,SP()));
+		instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,SP()));
 	}
 	Register* r = MemAlloc::get_next_temp_reg(&Type::intType);
-	instr_set->push_back(new Instruction(Instruction::Icode::MOVL,l,r));
+	instr_set->push_back(new Instruction(Instruction::Icode::MOVL, endLabel, r));
 	instr_set->push_back(new Instruction(Instruction::Icode::STI,SP(),SP()));
 	instr_set->push_back(new Instruction(Instruction::Icode::JMP,l));
 
@@ -1317,8 +1380,8 @@ InvocationNode::codeGen() {
 
 vector<Instruction*>*
 ReturnStmtNode::codeGen() {
-	vector<Instruction*>* instr_set = new vector<Instruction*>();
-	
+	vector<Instruction*>* instr_set = icode();
+
 	const Value* v1 = new Value(1, Type::UINT);
 	Constant* incr1 = new Constant(v1);
 	Register* r = MemAlloc::get_next_temp_reg(&Type::intType);
@@ -1329,24 +1392,36 @@ ReturnStmtNode::codeGen() {
 	else if ((expr()->type()->tag() == Type::TypeTag::DOUBLE))
 		instr_set->push_back(new Instruction(Instruction::Icode::STF,expr()->rVal(),r));
 
-	return instr_set;	
+	return instr_set;
 }
 
 vector<Instruction*>*
-ExprStmtNode::codeGen() {
-	return expr()->codeGen();
+ExprStmtNode::codeGen(Label* endLabel) {
+	return expr()->codeGen(endLabel);
 }
 
 
 vector<Instruction*>*
-CompoundStmtNode::codeGen() {
-	vector<Instruction*>* instr_set = new vector<Instruction*>();
+CompoundStmtNode::codeGen(Label* currLabel) {
+	vector<Instruction*>* instr_set = icode();
+	if (!instr_set) cout << "icode null\n";
 
 	const list<StmtNode*>* stmtList = stmts();
-	for (auto it = stmtList->begin(); it != stmtList->end(); ++it)
-	{
-		vector<Instruction*>* instr_set_stmt = (*it)->codeGen();
+	vector<Instruction*>* instr_set_stmt;
+	Label* endLab;
+	for (auto it = stmtList->begin(); it != stmtList->end(); ++it) {
+		cout << "stmt here\n";
+		if ((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::EXPR) {
+			endLab = LabelGenerator::getLabel();
+			instr_set_stmt = (*it)->codeGen(endLab);
+		} else {
+			instr_set_stmt = (*it)->codeGen();
+		}
 		instr_set->insert(instr_set->end(), instr_set_stmt->begin(), instr_set_stmt->end());
+	}
+
+	if (currLabel && instr_set && instr_set->size() > 0) {
+		(*instr_set)[0]->setLabel(currLabel);
 	}
 	return instr_set;
 }
@@ -1354,12 +1429,12 @@ CompoundStmtNode::codeGen() {
 vector<Instruction*>*
 IfNode::codeGen() {
 	vector<Label*>* labels = LabelGenerator::getIfLabel();
-	Label* ifTrue = (*labels)[0]; 
+	Label* ifTrue = (*labels)[0];
 	Label* ifFalse = (*labels)[1];
-	vector<Instruction*>* instr_set = new vector<Instruction*>();
+	vector<Instruction*>* instr_set = icode();
 	vector<Instruction*>* instr_set_cond = cond_->codeGen(ifTrue, ifFalse);
 	vector<Instruction*>* instr_set_then = then_->codeGen(ifTrue);
-	vector<Instruction*>* instr_set_else = else_->codeGen(ifTrue);
+	vector<Instruction*>* instr_set_else = else_->codeGen(ifFalse);
 
 	instr_set->insert(instr_set->end(), instr_set_cond->begin(), instr_set_cond->end());
 	instr_set->insert(instr_set->end(), instr_set_then->begin(), instr_set_then->end());
@@ -1369,15 +1444,6 @@ IfNode::codeGen() {
 }
 
 vector<Instruction*>*
-IfNode::codeGen() {
-	vector<Label*>* labels = LabelGenerator::getIfLabel();
-	Label* ifTrue = (*labels)[0]; 
+BreakStmtNode::codeGen() {
+	return NULL;
 }
-vector<Instruction*>*
-WhileStmtNode::codeGen() {
-	vector<Label*>* labels = LabelGenerator::getIfLabel();
-	Label* ifTrue = (*labels)[0]; 
-
-
-
-

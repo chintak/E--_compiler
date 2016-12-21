@@ -254,6 +254,13 @@ GlobalEntry::memAlloc() {
 			(*it)->memAlloc();
 		}
 	}
+
+	if (rules_.size() != 0) {
+        for(vector<RuleNode*>::const_iterator it = rules_.begin();
+        	it != rules_.end(); ++it) {
+            (*it)->memAlloc();
+        }
+    }
 }
 
 void
@@ -261,7 +268,7 @@ VariableEntry::memAlloc() {
 	if (initVal()) {
 		initVal()->memAlloc();  // allocate regs for computing rhs
 	}
-	if (vkind_ == VariableEntry::LOCAL_VAR) {
+	if (vkind_ == VariableEntry::LOCAL_VAR || vkind_ == VariableEntry::PARAM_VAR) {
 		lVal(MemAlloc::get_next_reg(name(), type()));
 	} else if (vkind_ == VariableEntry::GLOBAL_VAR) {
 		const Value* o = new Value(offSet_, Type::UINT);
@@ -285,13 +292,16 @@ FunctionEntry::memAlloc() {
 			if (ve->varKind() == VariableEntry::LOCAL_VAR) {
 				ve->offSet(locVarOffset);
 				locVarOffset--;
-				if (ve->initVal()) ve->memAlloc();
+				ve->memAlloc();
 			} else if (ve->varKind() == VariableEntry::PARAM_VAR) {
 				ve->offSet(paramVarOffset);
 				paramVarOffset++;
+				ve->memAlloc();
 			}
 		}
 	}
+
+	if (body()) body()->memAlloc();
 }
 
 /************** Code Gen *******************/
@@ -302,7 +312,25 @@ GlobalEntry::codeGen() {
 	VariableEntry* ve;
 	FunctionEntry* fe;
 	SymTab::iterator it = NULL;
-	vector<Instruction*>* ics = NULL, *instr_set = NULL;
+	Label* startLab = new Label("BEGIN");
+	vector<Instruction*>* ics = NULL, *instr_set = NULL, *func_ics = NULL;
+
+	for (it = st->begin(); it != st->end(); ++it)  {
+		if ((*it)->kind() == SymTabEntry::Kind::FUNCTION_KIND) {
+			fe = (FunctionEntry *)(*it);
+			ics = fe->codeGen();
+			if (ics) {
+				if (func_ics)
+					func_ics->insert(func_ics->end(), ics->begin(), ics->end());
+				else func_ics = ics;
+			}
+		}
+	}
+	if (func_ics) {
+		func_ics->insert(
+			func_ics->begin(),
+			new Instruction(Instruction::Icode::JMP, NULL, NULL, startLab, NULL));
+	}
 
 	for (it = st->begin(); it != st->end(); ++it)  {
 		if ((*it)->kind() == SymTabEntry::Kind::VARIABLE_KIND) {
@@ -316,28 +344,32 @@ GlobalEntry::codeGen() {
 				}
 			}
 		}
-		if ((*it)->kind() == SymTabEntry::Kind::FUNCTION_KIND) {
-			fe = (FunctionEntry *)(*it);
-			ics = fe->codeGen();
-			if (ics) {
-				if (instr_set)
-					instr_set->insert(instr_set->end(), ics->begin(), ics->end());
-				else instr_set = ics;
-			}
-		}
 	}
-
 	if (rules_.size() != 0) {
 		int count  = 1;
 		string label = "rule_body_";
 		Label* currlabel = new Label(label + to_string(count));
-        for(vector<RuleNode*>::const_iterator it = rules_.begin(); it != rules_.end(); ++it) {
-        	count++;
-            Label* nextlabel = new Label(label + to_string(count));
-            // (*it)->codeGen(currlabel,nextlabel);
-            currlabel = nextlabel;
-        }
-    }
+		Label* endLabel = new Label("END");
+		for(vector<RuleNode*>::const_iterator it = rules_.begin(); it != rules_.end(); ++it) {
+			count++;
+			Label* nextlabel = new Label(label + to_string(count));
+			if (std::next(it) == rules_.end())
+				nextlabel = endLabel;
+			ics = (*it)->codeGen(currlabel, nextlabel);
+			if (instr_set)
+				instr_set->insert(instr_set->end(), ics->begin(), ics->end());
+			else instr_set = ics;
+			currlabel = nextlabel;
+		}
+		string someMsg = "\"Execution complete!\"";
+		instr_set->push_back(
+			new Instruction(Instruction::Icode::PRTS, new Label(someMsg), NULL, NULL, endLabel));
+	}
+	if (instr_set && func_ics) {
+		(*instr_set)[0]->setLabel(startLab);
+		func_ics->insert(func_ics->end(), instr_set->begin(), instr_set->end());
+		instr_set = func_ics;
+	}
 
 	for (unsigned int i = 0; i < instr_set->size(); i++) {
 		(*instr_set)[i]->print(cout, 0);
@@ -428,7 +460,7 @@ FunctionEntry::codeGen() {
 	{
 		// set BP = SP
 		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,SP(),BP(),NULL,label()));
-		
+
 		// alloc space for ret val
 		const Value* v1 = new Value(1, Type::TypeTag::UINT);
 		Constant* incr1 = new Constant(v1);
@@ -439,7 +471,7 @@ FunctionEntry::codeGen() {
 
 		vector<Instruction*>* instr_set_body = body()->codeGen();
 		instr_set->insert(instr_set->end(), instr_set_body->begin(), instr_set_body->end());
-		
+
 		// pop stack uptil bp and set sp
 		const Value* v2 = new Value(2, Type::UINT);
 		Constant* incr2 = new Constant(v2);
@@ -452,7 +484,7 @@ FunctionEntry::codeGen() {
 		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr2,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));
-				
+
 	}
 	else
 	{
@@ -464,7 +496,7 @@ FunctionEntry::codeGen() {
 		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));
 	}
-	
+
 	return instr_set;
 }
 

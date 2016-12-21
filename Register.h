@@ -112,7 +112,7 @@ public:
     ~Label();
     string name() const { return lab_; }
     void print(ostream& os, int indent) const {
-        os << name() + string(":");
+        os << name();
     }
 
 private:

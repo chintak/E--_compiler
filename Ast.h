@@ -70,6 +70,8 @@ class AstNode: public ProgramElem {
   virtual const Type* typeCheck() {return NULL;};
   virtual void print(ostream& os, int indent=0) const=0;
   virtual void typePrint(ostream& os, int indent=0) const=0;
+	virtual vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel) { return NULL; }
+	virtual vector<Instruction*>* codeGen(Label* currLabel) { return NULL; }
 	virtual vector<Instruction*>* codeGen() {return NULL;}
   virtual void memAlloc() {};
 
@@ -129,8 +131,6 @@ class ExprNode: public AstNode {
 
   void print(ostream& os, int indent=0) const=0;
   void typePrint(ostream& os, int indent=0) const=0;
-  vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel) { return NULL; }
-  vector<Instruction*>* codeGen() { return NULL; }
 
  private:
   ExprNodeType exprType_;
@@ -220,7 +220,7 @@ class OpNode: public ExprNode {
   void memAlloc();
   Type* opTypeCheck(ExprNode* t1, ExprNode* t2, Type::TypeTag lFormType,
     Type::TypeTag rFormType, Type::TypeTag retTag, bool coerce);
-	vector<Instruction*>* codeGen();
+	vector<Instruction*>* codeGen(Label* endLabel=NULL);
 
  private:
   unsigned int arity_;
@@ -279,7 +279,8 @@ class InvocationNode: public ExprNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
-  vector<Instruction*>* codeGen();
+  void memAlloc();
+  vector<Instruction*>* codeGen(Label* endLabel);
 
  private:
   vector<ExprNode*>* params_;
@@ -367,6 +368,7 @@ class PrimitivePatNode: public BasePatNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  void memAlloc();
   vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel);
 
  private:
@@ -378,6 +380,7 @@ class PrimitivePatNode: public BasePatNode {
   ExprNode* cond_;
   ExprNode* condition_;
   list<OpNode*> asgs_;
+  vector<const Arg*>* argRegs_;
 };
 
 /****************************************************************/
@@ -481,7 +484,8 @@ class ExprStmtNode: public StmtNode {
     }
   };
   const Type* typeCheck();
-  vector<Instruction*>* codeGen();
+  void memAlloc() { if (expr_) expr_->memAlloc(); }
+  vector<Instruction*>* codeGen(Label* endLabel);
   ExprNode* expr() { return expr_; }
 
  private:
@@ -508,7 +512,8 @@ class CompoundStmtNode: public StmtNode{
   void  print(ostream& os, int indent) const;
   void  typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
-  vector<Instruction*>* codeGen();
+  void memAlloc();
+  vector<Instruction*>* codeGen(Label* currLabel=NULL);
 
  private:
   CompoundStmtNode(const CompoundStmtNode&);
@@ -569,6 +574,7 @@ class RuleNode: public AstNode {
   void print(ostream& os, int indent=0) const;
   void typePrint(ostream& os, int indent=0) const;
   const Type* typeCheck();
+  void memAlloc();
   vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel);
 
  private:
@@ -595,7 +601,7 @@ class WhileStmtNode: public StmtNode{
   void print(ostream& os, int indent) const;
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
-  vector<Instruction*>* codeGen();
+  // vector<Instruction*>* codeGen();
  private:
   ExprNode *cond_;
   StmtNode *body_;
@@ -615,8 +621,9 @@ class BreakStmtNode: public StmtNode {
 	if(val_ != NULL) val_->print(os, indent); else os << "NULL";};
 
   void typePrint(ostream& os, int indent) const {
-	os << "break ";
-	if(val_ != NULL) os << "UINT"; else os << "NULL";};
+		os << "break ";
+		if(val_ != NULL) os << "UINT"; else os << "NULL";
+	};
 
   const Type* typeCheck() { return Type::type[Type::VOID]; }
   vector<Instruction*>* codeGen();

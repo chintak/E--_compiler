@@ -2,12 +2,12 @@
 
 void
 Instruction::print(ostream& os, int indent) {
-    if (lbl_) { lbl_->print(os, 0); os << ' '; }
-    os << Instruction::icode[icode_] << ' ';
-    if (!arg1_)
-        std::cout << "arg1 is null!!\n";
-
-    arg1_->print(os, 0);
+    if (lbl_) { lbl_->print(os, 0); os << ": "; }
+    os << Instruction::icode[icode_];
+    if (arg1_) {
+        os << ' ';
+        arg1_->print(os, 0);
+    }
     if (arg2_) {
         os << ' ';
         arg2_->print(os, 0);
