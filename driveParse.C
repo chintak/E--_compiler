@@ -9,6 +9,8 @@
 #include "STEClasses.h"
 #include "SymTab.h"
 #include "Value.h"
+#include "Instruction.h"
+#include "BasicBlock.h"
 
 using namespace std;
 
@@ -209,12 +211,14 @@ main(int argc, char *argv[], char *envp[]) {
   stm.leaveToScope(SymTabEntry::Kind::GLOBAL_KIND);
   GlobalEntry *ge = (GlobalEntry*)(stm.currentScope());
   if (ge != NULL) {
-	// cout << "Finished parsing, here is the AST\n";
-	// ge->print(cout, 0);
+	cout << "Finished parsing, here is the AST\n";
+	ge->print(cout, 0);
   ge->typeCheck();
   // ge->typePrint(cout, 0);
   ge->memAlloc();
-  ge->codeGen();
+	vector<Instruction*>* ics = ge->codeGen();
+  vector<BasicBlock*>* blocks = createBlocks(ics);
+  liveVarAnalysis(blocks);
   }
 #endif
 }

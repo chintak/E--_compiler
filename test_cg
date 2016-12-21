@@ -1,10 +1,12 @@
+int a=1;
+int b=2;
+int c=b+3;
 double x = 6.0;
-void g() {
-int a1, a2;
-a1=1;
-};
 
 any -> {
-        g();
+a=c*b;
+b=5;
+a=b;
+c=a;
 } ;
 

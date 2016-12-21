@@ -59,6 +59,22 @@ public:
 		icode_(o), arg1_(a1), arg2_(a2), res_(r), lbl_(l) {}
 	~Instruction();
 	void print(ostream& os, int indent);
+	string label() { if (lbl_)
+						return lbl_->name(); 
+					 else return string(""); 
+				}
+	string targetLabel() 
+	{
+		if (res_ && res_->argKind() == Arg::LABEL)
+		{
+			const Label* l = (Label*) res_;
+			return l->name();
+		}
+		return string("");
+	}
+	const Arg* arg1() { return arg1_;}
+	const Arg* arg2() { return arg2_;}
+	const Arg* result() { return res_;}
 
 	static const string icode[];  // contains the mapping from Icode enum to actual instruction name in string
 

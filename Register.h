@@ -20,7 +20,7 @@ public:
     Arg(ArgKind a) { argKind_ = a; }
     ~Arg() {}
     virtual Type::TypeTag typeTag() const=0;
-    ArgKind argKind() { return argKind_; }
+    ArgKind argKind() const { return argKind_; }
     void argKind(ArgKind a) { argKind_ = a; }
     virtual void print(ostream& os, int indent) const=0;
 
