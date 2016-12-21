@@ -315,10 +315,11 @@ GlobalEntry::codeGen() {
 			}
 		}
 	}
-	for (unsigned int i = 0; i < instr_set->size(); i++) {
-		(*instr_set)[i]->print(cout, 0);
-		cout << "\n";
-	}
+	if (instr_set)
+			for (unsigned int i = 0; i < instr_set->size(); i++) {
+					(*instr_set)[i]->print(cout, 0);
+					cout << "\n";
+			}
 	return instr_set;
 }
 
