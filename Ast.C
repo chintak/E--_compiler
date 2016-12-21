@@ -1170,7 +1170,7 @@ void
 CompoundStmtNode::memAlloc() {
 	const list<StmtNode*>* stmtList = stmts();
 	for (auto it = stmtList->begin(); it != stmtList->end(); ++it) {
-		(*it)->memAlloc();
+		if ((*it)) (*it)->memAlloc();
 	}
 }
 

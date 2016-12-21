@@ -39,7 +39,6 @@ private:
     static Register* get_next_ireg();
     static Register* get_next_freg();
 
-
     static int iRegNum;
     static int fRegNum;
     static int tempNum;
