@@ -2,6 +2,11 @@ int x = 1, y=2;
 int z = x & y;
 int a = x | y;
 int b = x ^ y;
-any -> {
-		;
+event e(int i);
+e(f) -> {
+		if (a > b) {
+				a = 10;
+		} else {
+				b = 10;
+		}
 }

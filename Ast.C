@@ -1206,7 +1206,7 @@ RefExprNode::codeGen() {
 
 
 vector<Instruction*>*
-OpNode::codeGen(Label* endLabel) {
+OpNode::codeGen() {
 	vector<Instruction*>* ics = icode(), *ics1 = NULL;
 	const Arg* a1 = NULL;
 	const Arg* a2 = NULL;
@@ -1446,4 +1446,62 @@ IfNode::codeGen() {
 vector<Instruction*>*
 BreakStmtNode::codeGen() {
 	return NULL;
+}
+
+vector<Instruction*>*
+IfNode::codeGen(Label *endlbl) {
+		Label *thenlbl = new Label(Label::newlbl());
+		vector<Instruction*>* ics = NULL, *ics1 = NULL;
+		ics = cond()->codeGen(thenlbl);
+		if (elseStmt()) {
+				ics1 = elseStmt()->codeGen();
+				if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
+				else if (ics1) ics = ics1;
+				ics->push_back(new Instruction(Instruction::JMP, endlbl));
+		}
+		ics1 = thenStmt()->codeGen(thenlbl);
+		ics->insert(ics->end(), ics1->begin(), ics1->end());
+		return ics;
+}
+
+vector<Instruction*>*
+OpNode::codeGen(Label *lbl) {
+	if (arity_ != 2)
+		cout << "error instrx\n";
+	vector<Instruction*>* ics = NULL, *ics1 = NULL;
+	ics = arg_[0]->codeGen();
+	const Arg* a1 = arg_[0]->rVal();
+	const Arg* a2 = NULL;
+	if (arity_ == 2) {
+		ics1 = arg_[1]->codeGen();
+		a2 = arg_[1]->rVal();
+		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
+		else if (ics1) ics = ics1;
+	}
+	// perform the actual operation
+	if (!ics) ics = new vector<Instruction*>;
+	Type::TypeTag rT = type()->tag();
+	Instruction::Icode ic;
+	switch (opCode_) {
+			case OpCode::GT:
+				ic = (Type::isIntegral(rT)) ? Instruction::JMP_GT: Instruction::JMP_FGT;
+				ics->push_back(new Instruction(ic, a1, a2, lbl));
+				break;
+			case OpCode::GE:
+				ic = (Type::isIntegral(rT)) ? Instruction::JMP_GE: Instruction::JMP_FGE;
+				ics->push_back(new Instruction(ic, a1, a2, lbl));
+				break;
+			case OpCode::EQ:
+				ic = (Type::isIntegral(rT)) ? Instruction::JMP_EQ: Instruction::JMP_FEQ;
+				ics->push_back(new Instruction(ic, a1, a2, lbl));
+				break;
+			case OpCode::NE:
+				ic = (Type::isIntegral(rT)) ? Instruction::JMP_NE: Instruction::JMP_FNE;
+				ics->push_back(new Instruction(ic, a1, a2, lbl));
+				break;
+			default:;
+	}
+	icode(ics);
+	return ics;
+
 }

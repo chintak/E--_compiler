@@ -70,9 +70,9 @@ class AstNode: public ProgramElem {
   virtual const Type* typeCheck() {return NULL;};
   virtual void print(ostream& os, int indent=0) const=0;
   virtual void typePrint(ostream& os, int indent=0) const=0;
-	virtual vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel) { return NULL; }
-	virtual vector<Instruction*>* codeGen(Label* currLabel) { return NULL; }
-	virtual vector<Instruction*>* codeGen() {return NULL;}
+  virtual vector<Instruction*>* codeGen(Label* currLabel, Label* nextlabel) { return NULL; }
+  virtual vector<Instruction*>* codeGen(Label* currLabel) { return NULL; }
+  virtual vector<Instruction*>* codeGen() {return NULL;}
   virtual void memAlloc() {};
 
   virtual void renameRV(string prefix) {}; // new names start with given prefix
@@ -220,7 +220,8 @@ class OpNode: public ExprNode {
   void memAlloc();
   Type* opTypeCheck(ExprNode* t1, ExprNode* t2, Type::TypeTag lFormType,
     Type::TypeTag rFormType, Type::TypeTag retTag, bool coerce);
-	vector<Instruction*>* codeGen(Label* endLabel=NULL);
+	vector<Instruction*>* codeGen();
+	vector<Instruction*>* codeGen(Label *lbl);
 
  private:
   unsigned int arity_;
@@ -544,6 +545,7 @@ class IfNode: public StmtNode{
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
   vector<Instruction*>* codeGen();
+  vector<Instruction*>* codeGen(Label *lbl);
 
  private:
   ExprNode *cond_;
