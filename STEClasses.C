@@ -363,7 +363,7 @@ GlobalEntry::codeGen() {
 		}
 		string someMsg = "\"Execution complete!\"";
 		instr_set->push_back(
-			new Instruction(Instruction::Icode::PRTS, new Label(someMsg), NULL, NULL, endLabel));
+			new Instruction(Instruction::Icode::PRTS, new Label(someMsg), NULL, NULL));
 	}
 	if (instr_set && func_ics) {
 		(*instr_set)[0]->setLabel(startLab);
