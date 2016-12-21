@@ -32,6 +32,8 @@ public:
 
     static map<Register*, string> regToVarMap;
     static map<string, Register*> varToRegMap;
+    static Register* BP_;
+    static Register* SP_;
 
 private:
     static Register* get_next_ireg();
