@@ -1193,6 +1193,18 @@ OpNode::codeGen() {
 				ic = (Type::isIntegral(rT)) ? Instruction::NEG: Instruction::FNEG;
 				ics->push_back(new Instruction(ic, a1, a2, a1, NULL));
 				break;
+			case OpCode::MOD:
+				ics->push_back(new Instruction(Instruction::MOD, a1, a2, u, NULL));
+				break;
+			case OpCode::BITAND:
+				ics->push_back(new Instruction(Instruction::AND, a1, a2, u, NULL));
+				break;
+			case OpCode::BITOR:
+				ics->push_back(new Instruction(Instruction::OR, a1, a2, u, NULL));
+				break;
+			case OpCode::BITXOR:
+				ics->push_back(new Instruction(Instruction::XOR, a1, a2, u, NULL));
+				break;
 			default:;
 	}
 	if (Type::isCoerce(rT, cT)) {
