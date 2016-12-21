@@ -7,6 +7,7 @@
 
 using namespace std;
 
+
 class Arg {
 public:
     enum ArgKind {
@@ -18,6 +19,7 @@ public:
     Arg() {}
     Arg(ArgKind a) { argKind_ = a; }
     ~Arg() {}
+    virtual Type::TypeTag typeTag() const=0;
     ArgKind argKind() { return argKind_; }
     void argKind(ArgKind a) { argKind_ = a; }
     virtual void print(ostream& os, int indent) const=0;
@@ -33,24 +35,36 @@ public:
         INT,
         FLOAT
     };
+    Register(RegKind k, string vName, int n) : Arg(Arg::REGISTER)
+        { num_ = n; regKind_ = k; varName_ = vName; }
     Register(RegKind k, int n) : Arg(Arg::REGISTER)
         { num_ = n; regKind_ = k; }
     ~Register();
-    // static const Register* BP() { return BP_; }
-    // static const Register* SP() { return SP_; }
+
     virtual string name() const=0;
     int num() const { return num_; }
     RegKind regKind() { return regKind_; }
     RegKind regKind() const { return regKind_; }
+    string varName() { return varName_; }
+    string varName() const { return varName_; }
+    void varName(string vName) { varName_ = vName; }
+    // void varName(string vName) const { varName_ = vName; }
+
+    Type::TypeTag typeTag() const {
+        if (regKind() == Register::INT) return Type::INT;
+        else return Type::DOUBLE;
+    }
 
 private:
     int num_;
+    string varName_;
     enum RegKind regKind_;
 };
 
 class IReg : public Register {
 public:
     IReg(int n) : Register(INT, n) {}
+    IReg(string vName, int n) : Register(INT, vName, n) {}
     ~IReg();
     string name() const {
         char c[5];
@@ -65,6 +79,7 @@ public:
 class FReg : public Register {
 public:
     FReg(int n) : Register(FLOAT, n) {}
+    FReg(string vName, int n) : Register(FLOAT, vName, n) {}
     ~FReg();
     string name() const {
         char c[5];
@@ -79,11 +94,16 @@ public:
 class Constant : public Arg {
 public:
     Constant(const Value* v) : Arg(Arg::CONSTANT) { val_ = v; }
+    const Value* val() { return val_; }
+    Type::TypeTag typeTag() const {
+        return val_->type()->tag();
+    }
+
 private:
-    const Value* val_;
     void print(ostream& os, int indent) const {
         val_->print(os, indent);
     }
+    const Value* val_;
 };
 
 class Label : public Arg {

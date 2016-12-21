@@ -1074,12 +1074,20 @@ WhileStmtNode::typeCheck() {
 
 void
 RefExprNode::memAlloc() {
-	rVal(MemAlloc::get_next_reg(type()));
+	const Type* rT = type();
+	const Type* cT = coercedType();
+
+	unCoercedVal(MemAlloc::get_next_temp_reg(rT));
+	rVal(unCoercedVal());
+	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
+		unCoercedVal(MemAlloc::get_next_temp_reg(rT));
+		rVal(MemAlloc::get_next_temp_reg(cT));
+	}
 }
 
 void
 ValueNode::memAlloc() {
-	rVal(MemAlloc::get_next_reg(type()));
+	rVal(MemAlloc::get_next_temp_reg(type()));
 }
 
 void
@@ -1093,12 +1101,12 @@ OpNode::memAlloc() {
 
 	// allocate register for result
 	if (cT && Type::isCoerce(t->tag(), cT->tag())) {
-		unCoercedVal(MemAlloc::get_next_reg(t));
-		rVal(MemAlloc::get_next_reg(cT));
+		unCoercedVal(MemAlloc::get_next_temp_reg(t));
+		rVal(MemAlloc::get_next_temp_reg(cT));
 		// cout << "malloc: OP: " << rVal()->name() << endl;
 		// cout << "malloc: OP: " << unCoercedVal()->name() << endl;
 	} else {
-		unCoercedVal(MemAlloc::get_next_reg(t));
+		unCoercedVal(MemAlloc::get_next_temp_reg(t));
 		rVal(unCoercedVal());
 		// cout << "malloc: OP: " << unCoercedVal()->name() << endl;
 	}
@@ -1110,7 +1118,7 @@ vector<Instruction*>*
 ValueNode::codeGen() {
 	vector<Instruction*>* ics = icode();
 	const Constant* v = new Constant(value());
-	const Register* r = rVal();
+	const Register* r = (const Register*) rVal();
 	Instruction::Icode i_code;
 	if (r->regKind() == Register::RegKind::INT)
 		i_code = Instruction::Icode::MOVI;
@@ -1121,20 +1129,40 @@ ValueNode::codeGen() {
 }
 
 vector<Instruction*>*
+RefExprNode::codeGen() {
+	const Type* cT = coercedType();
+	const Type* rT = type();
+	vector<Instruction*>* ics = icode();
+	VariableEntry* ve = (VariableEntry*) symTabEntry();
+	const Arg* l = ve->lVal();
+	const Arg* u = unCoercedVal();
+	const Arg* r = rVal();
+	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
+	ics->push_back(new Instruction(ic, l, NULL, u, NULL));
+
+	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
+		ic = (Type::isFloat(cT->tag())) ? Instruction::MOVIF : Instruction::MOVFI;
+		ics->push_back(new Instruction(ic, u, NULL, r, NULL));
+	}
+	return ics;
+}
+
+
+vector<Instruction*>*
 OpNode::codeGen() {
 	vector<Instruction*>* ics = NULL, *ics1 = NULL;
-	const Register* a1 = arg_[0]->rVal();
+	const Arg* a1 = arg_[0]->rVal();
 	ics = arg_[0]->codeGen();
 	if (arity_ == 2) {
-		const Register* a2 = arg_[1]->rVal();
+		const Arg* a2 = arg_[1]->rVal();
 		ics1 = arg_[1]->codeGen();
 		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
 		else if (ics1) ics = ics1;
 
 		// perform the actual operation
 		if (!ics) ics = new vector<Instruction*>;
-		const Register* u = unCoercedVal();
-		const Register* r = rVal();
+		const Arg* u = unCoercedVal();
+		const Arg* r = rVal();
 		Type::TypeTag rT = type()->tag();
 		Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
 		Instruction::Icode ic;
@@ -1149,6 +1177,7 @@ OpNode::codeGen() {
 			ics->push_back(new Instruction(ic, u, NULL, r, NULL));
 		}
 	}
+	icode(ics);
 	return ics;
 }
 
