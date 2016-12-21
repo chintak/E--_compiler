@@ -122,6 +122,7 @@ class FunctionEntry: public SymTabEntry {
 				int line=0, int column=0, string file=""):
     SymTabEntry(name, SymTabEntry::Kind::FUNCTION_KIND, line,column, file, type) {
       body_ = nullptr;
+      label_ = new Label(name);
  	};
   ~FunctionEntry() {};
 
@@ -133,10 +134,12 @@ class FunctionEntry: public SymTabEntry {
   void typePrint(ostream& os, int indent) const;
   const Type* typeCheck();
   void memAlloc();
+  Label* label(){ return label_; }
   vector<Instruction*>* codeGen();
 
  private:
   CompoundStmtNode* body_;
+  Label* label_;
 };
 
 class EventEntry: public SymTabEntry {
