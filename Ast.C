@@ -1126,11 +1126,27 @@ ValueNode::codeGen() {
 		const Constant* v = new Constant(value());
 		const Register* r = (const Register*) rVal();
 		Instruction::Icode i_code;
-		if (r->regKind() == Register::RegKind::INT)
-				i_code = Instruction::Icode::MOVI;
+		if (ics)
+			cout << "ics not NULL\n";
 		else
-				i_code = Instruction::Icode::MOVF;
+			cout << "ics is NULL!!\n";
+		if (!r)
+			cout << "r is NULL\n";
+		if (r->regKind() == Register::RegKind::INT)
+		{
+				cout << "movi instr\n";
+				i_code = Instruction::Icode::MOVI;
+				cout << "movi instr ended\n";
+		}
+		else
+		{
+			cout << "movf instr \n";
+			i_code = Instruction::Icode::MOVF;
+			cout << "movf instr ended\n";
+		}
+		cout << "push to ics\n";
 		ics->push_back(new Instruction(i_code, v, NULL, r, NULL));
+		cout << "pushed to ics\n";
 		return ics;
 }
 
@@ -1143,6 +1159,7 @@ RefExprNode::codeGen() {
 	const Arg* l = ve->lVal();
 	const Arg* u = unCoercedVal();
 	const Arg* r = rVal();
+cout << line()<<endl;
 	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
 	ics->push_back(new Instruction(ic, l, NULL, u, NULL));
 
@@ -1353,7 +1370,15 @@ IfNode::codeGen() {
 	return instr_set;
 }
 
-
+vector<Instruction*>*
+IfNode::codeGen() {
+	vector<Label*>* labels = LabelGenerator::getIfLabel();
+	Label* ifTrue = (*labels)[0]; 
+}
+vector<Instruction*>*
+WhileStmtNode::codeGen() {
+	vector<Label*>* labels = LabelGenerator::getIfLabel();
+	Label* ifTrue = (*labels)[0]; 
 
 
 
