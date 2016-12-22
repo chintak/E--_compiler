@@ -350,9 +350,10 @@ GlobalEntry::codeGen() {
 		string label = "rule_body_";
 		Label* currlabel = new Label(label + to_string(count));
 		Label* endLabel = new Label("END");
+		Label* nextlabel; 
 		for(vector<RuleNode*>::const_iterator it = rules_.begin(); it != rules_.end(); ++it) {
 			count++;
-			Label* nextlabel = new Label(label + to_string(count));
+			nextlabel = new Label(label + to_string(count));
 			if (std::next(it) == rules_.end())
 				nextlabel = endLabel;
 			ics = (*it)->codeGen(currlabel, nextlabel);
@@ -363,7 +364,7 @@ GlobalEntry::codeGen() {
 		}
 		string someMsg = "\"Execution complete!\"";
 		instr_set->push_back(
-			new Instruction(Instruction::Icode::PRTS, new Label(someMsg), NULL, NULL));
+			new Instruction(Instruction::Icode::PRTS, new Label(someMsg), NULL, NULL, nextlabel));
 	}
 	if (instr_set && func_ics) {
 		(*instr_set)[0]->setLabel(startLab);
@@ -469,13 +470,16 @@ FunctionEntry::codeGen() {
 
 	if (body() != NULL)
 	{
-		// set BP = SP
-		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,SP(),BP(),NULL,label()));
-
-		// alloc space for ret val
 		const Value* v1 = new Value(1, Type::TypeTag::UINT);
 		Constant* incr1 = new Constant(v1);
-		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,BP()));
+
+		// set BP = SP
+		instr_set->push_back(new Instruction(Instruction::Icode::STI,BP(),SP(),NULL,label()));
+		instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,BP()));
+		instr_set->push_back(new Instruction(Instruction::Icode::MOVI,SP(),BP(),NULL));
+
+		// alloc space for ret val
+		// instr_set->push_back(new Instruction(Instruction::Icode::MOVI,BP()));
 		instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,BP()));
 
 		// process instructions in the body
@@ -486,13 +490,16 @@ FunctionEntry::codeGen() {
 		// pop stack uptil bp and set sp
 		const Value* v2 = new Value(2, Type::UINT);
 		Constant* incr2 = new Constant(v2);
-		instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr2,SP()));
-		instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr2,SP()));
+		// instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr1,SP()));
+		instr_set->push_back(new Instruction(Instruction::Icode::SUB,BP(),incr1,SP()));
 
 		// jump to ret.addr
 
+
+
 		Register* r1 = MemAlloc::get_next_temp_reg(&Type::intType);
-		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr2,r1));
+		instr_set->push_back(new Instruction(Instruction::Icode::ADD,BP(),incr2,r1));
+		instr_set->push_back(new Instruction(Instruction::Icode::ADD,SP(),incr1,BP()));
 		instr_set->push_back(new Instruction(Instruction::Icode::LDI,r1,r1));
 		instr_set->push_back(new Instruction(Instruction::Icode::JMPI,r1));
 

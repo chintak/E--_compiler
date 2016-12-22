@@ -1192,6 +1192,7 @@ ValueNode::codeGen() {
 
 vector<Instruction*>*
 RefExprNode::codeGen() {
+	// cout << line() << "in refexpr\n";
 	const Type* cT = coercedType();
 	const Type* rT = type();
 	vector<Instruction*>* ics = icode();
@@ -1203,9 +1204,14 @@ RefExprNode::codeGen() {
 	if (!l) {cout << "RefExprNode lval null\n"; return NULL;}
 	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
 	ics->push_back(new Instruction(ic, l, NULL, u, NULL));
+	// cout << "\nin refxpr with this reg\n";
+	// rVal()->print(cout,0);
+	// cout << "\n";
+	ics->push_back(new Instruction(ic, rVal(), NULL, u, NULL));
 
 	if (cT && Type::isCoerce(rT->tag(), cT->tag())) {
 		ic = (Type::isFloat(cT->tag())) ? Instruction::MOVIF : Instruction::MOVFI;
+		ics->push_back(new Instruction(ic, u, NULL, r, NULL));
 		ics->push_back(new Instruction(ic, u, NULL, r, NULL));
 	}
 	return ics;
@@ -1324,21 +1330,24 @@ PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
 		if (aReg->argKind() == Arg::REGISTER) {
 			const Arg* l = (*it2)->lVal();
 			const Constant* c = new Constant(new Value((*it2)->offSet(), Type::INT));
-			instr_set->push_back(
-				new Instruction(Instruction::Icode::MOVI, c, NULL, l, NULL));
-			instr_set->push_back(
-				new Instruction(Instruction::Icode::ADD, l, SP(), l));
+			// instr_set->push_back(
+				// new Instruction(Instruction::Icode::ADD, l, SP(), l));
 			if (((Register*) aReg)->regKind() == Register::INT) {
 				instr_set->push_back(
 					new Instruction(Instruction::Icode::INI, aReg, NULL));
 				instr_set->push_back(
 					new Instruction(Instruction::Icode::STI, aReg, NULL, l));
+				// instr_set->push_back(
+				// 	new Instruction(Instruction::Icode::STI, aReg, NULL, (*it2)->lVal()));
 			} else {
 				instr_set->push_back(
 					new Instruction(Instruction::Icode::INF, aReg, NULL));
 				instr_set->push_back(
 					new Instruction(Instruction::Icode::STF, aReg, NULL));
 			}
+			instr_set->push_back(
+				new Instruction(Instruction::Icode::STI, l, c, NULL, NULL));
+
 		}
 	}
 
@@ -1352,7 +1361,7 @@ PrimitivePatNode::codeGen(Label* currLabel, Label* nextlabel) {
 vector<Instruction*>*
 InvocationNode::codeGen(Label* endLabel) {
 	vector<Instruction*>* instr_set = icode();
-	return instr_set; // TODO: integrate with Ubaid
+	// return instr_set; // TODO: integrate with Ubaid
 	FunctionEntry* fe = (FunctionEntry*) symTabEntry();
 	Label* l = fe->label();
 	vector<ExprNode*>* args = params();
@@ -1369,7 +1378,7 @@ InvocationNode::codeGen(Label* endLabel) {
 	{
 		if (!(*it)) cout << "inv node arg null\n";
 		if ((*it)->tag() == Type::TypeTag::INT) {
-			instr_set->push_back(new Instruction(Instruction::Icode::STI,(*it1)->rVal(),SP()));
+			instr_set->push_back(new Instruction(Instruction::Icode::STI,(*it1)->lVal(),SP()));
 		}
 		else if ((*it)->tag() == Type::TypeTag::DOUBLE) {
 			instr_set->push_back(new Instruction(Instruction::Icode::STF,(*it1)->rVal(),SP()));
@@ -1378,8 +1387,13 @@ InvocationNode::codeGen(Label* endLabel) {
 	}
 	Register* r = MemAlloc::get_next_temp_reg(&Type::intType);
 	instr_set->push_back(new Instruction(Instruction::Icode::MOVL, endLabel, r));
-	instr_set->push_back(new Instruction(Instruction::Icode::STI,SP(),SP()));
+	instr_set->push_back(new Instruction(Instruction::Icode::STI,r,SP()));
+	instr_set->push_back(new Instruction(Instruction::Icode::SUB,SP(),incr1,SP()));
+
 	instr_set->push_back(new Instruction(Instruction::Icode::JMP,l));
+	string someMsg = "\"ret. functioncall\"";
+		instr_set->push_back(
+			new Instruction(Instruction::Icode::PRTS, new Label(someMsg), NULL, NULL, endLabel));
 
 	return instr_set;
 }
@@ -1388,15 +1402,10 @@ vector<Instruction*>*
 ReturnStmtNode::codeGen() {
 	vector<Instruction*>* instr_set = icode();
 
-	const Value* v1 = new Value(1, Type::UINT);
-	Constant* incr1 = new Constant(v1);
-	Register* r = MemAlloc::get_next_temp_reg(&Type::intType);
-
-	instr_set->push_back(new Instruction(Instruction::Icode::ADD,BP(),incr1,r));
 	if (expr()->type()->tag() == Type::TypeTag::INT)
-		instr_set->push_back(new Instruction(Instruction::Icode::STI,expr()->rVal(),r));
+		instr_set->push_back(new Instruction(Instruction::Icode::STI,expr()->rVal(),BP()));
 	else if ((expr()->type()->tag() == Type::TypeTag::DOUBLE))
-		instr_set->push_back(new Instruction(Instruction::Icode::STF,expr()->rVal(),r));
+		instr_set->push_back(new Instruction(Instruction::Icode::STF,expr()->rVal(),BP()));
 
 	return instr_set;
 }
