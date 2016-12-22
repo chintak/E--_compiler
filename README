@@ -1,5 +1,11 @@
-Modified error msg string for errtest/in06b:
-Changed
-"Only simple patterns without `.', `*', and `!' operatorscan be negated"
-to
-"Only simple patterns without `.', `*', and `!' operators can be negated"
+clean the previous build
+    $ make clean
+
+make a new build
+    $ make
+
+generate intermediate code of the source file in1 and store it in in1.i file
+    $ ./demo in1 > in1.i
+
+Process the .i file using assembler provided to generrate executable
+    $ ./erun in1.i -dr -df -m 10000000 -dm 0 10 > in1.out 2> in1.out
