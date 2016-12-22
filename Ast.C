@@ -1137,6 +1137,7 @@ IfNode::memAlloc() {
 void
 InvocationNode::memAlloc() {
 	vector<ExprNode*>* args = params();
+	if (!args) return;
 	for (auto it = args->begin(); it != args->end(); ++it) {
 		(*it)->memAlloc();
 	}
@@ -1202,7 +1203,7 @@ RefExprNode::codeGen() {
 	const Arg* u = unCoercedVal();
 	const Arg* r = rVal();
 
-	if (!l) {cout << "RefExprNode lval null\n"; return NULL;}
+	if (!l) { return ics; cout << "RefExprNode lval null\n"; return NULL;}
 	Instruction::Icode ic = (Type::isFloat(l->typeTag()) ? Instruction::Icode::LDF : Instruction::Icode::LDI);
 	ics->push_back(new Instruction(ic, l, NULL, u, NULL));
 
@@ -1235,6 +1236,10 @@ OpNode::codeGen() {
 			ics->push_back(
 				new Instruction(ic, a1, BP(), a1));
 		}
+		ic = ((a1->typeTag() == Type::INT) ?
+				Instruction::STI : Instruction::STF);
+		ics->push_back(new Instruction(ic, a2, NULL, a1, NULL));
+		return ics;
 	} else {
 		ics = arg_[0]->codeGen();
 		a1 = arg_[0]->rVal();
@@ -1252,12 +1257,6 @@ OpNode::codeGen() {
 	Type::TypeTag rT = type()->tag();
 	Type::TypeTag cT = coercedType() ? coercedType()->tag() : Type::VOID;
 	switch (opCode_) {
-			case OpCode::ASSIGN:
-				if (!a1) cout << line() << ":" << "lval null\n";
-				ic = ((a1->typeTag() == Type::INT) ?
-						Instruction::STI : Instruction::STF);
-				ics->push_back(new Instruction(ic, a2, NULL, a1, NULL));
-				break;
 			case OpCode::PLUS:
 				ic = (Type::isIntegral(rT)) ? Instruction::ADD : Instruction::FADD;
 				ics->push_back(new Instruction(ic, a1, a2, u, NULL));
@@ -1306,7 +1305,9 @@ vector<Instruction*>*
 RuleNode::codeGen(Label* currLabel, Label* nextlabel) {
 	vector<Instruction*>* instr_set = pat()->codeGen(currLabel, nextlabel);
 	vector<Instruction*>* instr_set_reaction = reaction()->codeGen(currLabel);
-	if (instr_set_reaction)
+	if (!instr_set)
+		instr_set = instr_set_reaction;
+	else if (instr_set_reaction && instr_set_reaction->size() > 0)
 		instr_set->insert(instr_set->end(), instr_set_reaction->begin(), instr_set_reaction->end());
 	return instr_set;
 }
@@ -1421,6 +1422,7 @@ CompoundStmtNode::codeGen(Label* currLabel) {
 	vector<Instruction*>* instr_set_stmt;
 	Label* endLabPrev=NULL, *endLabCur=NULL;
 	for (auto it = stmtList->begin(); it != stmtList->end(); ++it) {
+		if (!(*it)) continue;
 		if (((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::EXPR) ||
 			((*it)->stmtNodeKind() == StmtNode::StmtNodeKind::IF)) {
 			endLabCur = LabelGenerator::getLabel();
@@ -1429,10 +1431,10 @@ CompoundStmtNode::codeGen(Label* currLabel) {
 			instr_set_stmt = (*it)->codeGen();
 			endLabCur = NULL;
 		}
-		if (endLabPrev && instr_set_stmt)
+		if (endLabPrev && instr_set_stmt && instr_set_stmt->size() > 0)
 			(*instr_set_stmt)[0]->setLabel(endLabPrev);
 		endLabPrev = endLabCur;
-		instr_set->insert(instr_set->end(), instr_set_stmt->begin(), instr_set_stmt->end());
+		if (instr_set_stmt) instr_set->insert(instr_set->end(), instr_set_stmt->begin(), instr_set_stmt->end());
 	}
 
 	if (currLabel && instr_set && instr_set->size() > 0) {
@@ -1466,16 +1468,22 @@ BreakStmtNode::codeGen() {
 vector<Instruction*>*
 IfNode::codeGen(Label *endlbl) {
 	Label *thenlbl = new Label(Label::newlbl());
-	vector<Instruction*>* ics = NULL, *ics1 = NULL;
+	vector<Instruction*>* ics = icode(), *ics1 = NULL;
+	if (!cond()) return ics;
 	ics = cond()->codeGen(thenlbl);
+	if (!ics) ics = icode();
 	if (elseStmt()) {
 		ics1 = elseStmt()->codeGen(NULL);
-		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
-		else if (ics1) ics = ics1;
-		ics->push_back(new Instruction(Instruction::JMP, endlbl));
+		if (ics1) {
+			if (ics) ics->insert(ics->end(), ics1->begin(), ics1->end());
+			else ics = ics1;
+			ics->push_back(new Instruction(Instruction::JMP, endlbl));
+		}
 	}
-	ics1 = thenStmt()->codeGen(thenlbl);
-	ics->insert(ics->end(), ics1->begin(), ics1->end());
+	if (thenStmt()) {
+		ics1 = thenStmt()->codeGen(thenlbl);
+		if (ics && ics1) ics->insert(ics->end(), ics1->begin(), ics1->end());
+	}
 	return ics;
 }
 
