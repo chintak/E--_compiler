@@ -5,9 +5,8 @@
 
 event open (string a1 , int a2 , unsigned int a3);
         
-/*
 byte b3;
-*/
+
 int l;
 int i = 65536;
 int j = -65536;
@@ -18,28 +17,20 @@ unsigned int ul = 80 ;
 int ci = 2 ;
 double d = 34.456; 
 
-/*
 void logMessage();
 
 bool b5=true;
 
 string str = "sss";
 
-string str1;
-*/
+string str1;//  = 0;
+
 int k=4;
 double f = 3.3;
 
-/*
 byte b ;
 string s ;
-*/
-int ii = k%2;
-/* int dd = b + k - f ; */
 
-int ll = ci-k; 
-int lx = i ; 
-double dx = i+j + 0.89; 
 
 int get (int a){
 	return a;
@@ -47,7 +38,6 @@ int get (int a){
 }
 
 open(file, flags, mode) -> {
-/*
         i= d%l;
         d = b + s - f ;
 
@@ -56,7 +46,6 @@ open(file, flags, mode) -> {
         ci = 8;
         d = i+j + 0.89; 
         d = l/s*str ;
-  */      
-;
+        
 	};
 
